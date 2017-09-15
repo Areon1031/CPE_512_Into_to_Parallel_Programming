@@ -43,6 +43,10 @@ using namespace std;
 #include <stdlib.h>
 #include <mpi.h> /* MPI Prototype Header Files */
 
+// Defines so that I can compile the code in visual studio
+#define srand48(s) srand(s)
+#define drand48() (((double)rand())/((double)RAND_MAX))
+
 #define SEED 2397            /* random number seed */
 #define MAX_VALUE   100.0    /* maximum value of any number in list */
 #define MIN_VALUE   -50.0    /* minimum value of any number in list */
@@ -238,14 +242,13 @@ void reduce(double *sum, double *partial_sum,int root, int rank,int numtasks)
 MAIN ROUTINE: summation of numbers in a list
 */
 
-int main( int argc, char *argv[])
+int main_1( int argc, char *argv[])
 {
    double *numbers,*group;
    double sum, pt_sum;
    int data_size,group_size,num_group,i;
    int numtasks,rank,num;
    MPI_Status status;
-
 
    MPI_Init(&argc,&argv); // initalize MPI environment
    MPI_Comm_size(MPI_COMM_WORLD,&numtasks); // get total number of MPI processes
@@ -257,7 +260,6 @@ int main( int argc, char *argv[])
 
    //  if root MPI Process (0) then
    if(rank==0) {
-
       // dynamically allocate from heap the numbers array on the root process
       numbers = new (nothrow) double[data_size];
       if (numbers==0) { // check for null pointer
