@@ -127,7 +127,8 @@ int get_data_size(int argc, char *argv[], int rank, int numtasks)
 		// user, the root process must send its value to all of the
 		// other MPI process. It can do this with the broadcast_int()
 		// broadcast routine.
-		broadcast_int(&size, 0, rank, numtasks);
+		//broadcast_int(&size, 0, rank, numtasks);
+		MPI_Bcast(&size, numtasks, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	}
 	// Two Command Line Argument case:
 	// user supplied the number of numbers on the command line.
@@ -351,6 +352,7 @@ int main(int argc, char *argv[])
 	// Pseudo code
 	int base = data_size / numtasks;
 	int extra = data_size % numtasks;
+	int num_items_per_section;
 	//group = rank < extra ? new (nothrow) double[base + 1] : new (nothrow) double[base];
 	if (rank < extra)
 		group = new (nothrow) double[base + 2];
@@ -365,9 +367,14 @@ int main(int argc, char *argv[])
 		MPI_Abort(MPI_COMM_WORLD, 1); // abort the MPI Environment
 	}
 
+	int* scounts = new (nothrow) int[numtasks];
+	int* displs = new (nothrow) int[numtasks];
+
 	// scatter the numbers matrix to all processing elements in
 	// the system
 	scatter(numbers, group, data_size, 0, rank, numtasks);
+	// KRR TEST MPI_Scatterv
+	//MPI_Scatterv(numbers, scounts, displs, MPI_DOUBLE, group, num_items_per_section, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 	// sum up elements in the group associated with the
 	// current process
@@ -389,10 +396,9 @@ int main(int argc, char *argv[])
 	// obtain a global maximum by comparing local maximums from other MPI tasks
 
 	// edit to use the MPI reduce
-	double pt_sum_final;
 	double min_final;
 	double max_final;
-	MPI_Reduce(&sum, &pt_sum_final, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&pt_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce(&min, &min_final, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
 	MPI_Reduce(&max, &max_final, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
@@ -403,7 +409,7 @@ int main(int argc, char *argv[])
 
 	// output sum from root MPI process
 	if (rank == 0) {
-		cout << "Sum of numbers is " << setprecision(8) << pt_sum_final << endl;
+		cout << "Sum of numbers is " << setprecision(8) << sum << endl;
 		cout << "Minimum of numbers is " << setprecision(8) << min_final << endl;
 		cout << "Maximum of numbers is " << setprecision(8) << max_final << endl;
 	}
@@ -411,6 +417,8 @@ int main(int argc, char *argv[])
 	// reclaim dynamiclly allocated memory
 	if (rank == 0) delete numbers;
 	delete group;
+	delete scounts;
+	delete displs;
 
 	// Terminate MPI Program -- perform necessary MPI housekeeping
 	// clear out all buffers, remove handlers, etc.
