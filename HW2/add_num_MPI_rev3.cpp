@@ -40,10 +40,9 @@ CPE_512 Intro to Parallel Programming
 Homework #2
 September 20, 2017
 
-add_num_mpi_rev2.cpp
-Addition: Making it so that the application can accept and use
-a set of numbers that doesn't have to be a multiple of the number
-of processors tasked to do the job.
+add_num_mpi_rev3.cpp
+Addition: Replacing the broadcast, scatter, and reduce calls with the 
+appropriate MPI built in call.
 */
 
 using namespace std;
@@ -52,6 +51,7 @@ using namespace std;
 #include <sstream>
 #include <stdlib.h>
 #include <mpi.h> /* MPI Prototype Header Files */
+#include <cmath>
 
 // Defines so that I can compile the code in visual studio
 #define srand48(s) srand(s)
@@ -187,11 +187,7 @@ void scatter(double *numbers, double *group, int num_size, int root, int rank, i
 	// determine number of elements in subarray groups to be processed by
 	// each MPI process assuming a perfectly even distribution of elements 
 	// krr edits
-	int base = num_size / numtasks;
-	int extra = num_size % numtasks;
-	int number_elements_per_section = rank < extra ? base + 2 : base + 1;
-
-	//int number_elements_per_section = num_size / numtasks;
+	int number_elements_per_section = ceil((double)num_size / numtasks);
 
 	// if root MPI process send portion of numbers array to each of the
 	// the other MPI processes as well as make a copy of the portion
@@ -213,9 +209,6 @@ void scatter(double *numbers, double *group, int num_size, int root, int rank, i
 				MPI_Send(&numbers[begin_element], number_elements_per_section,
 					MPI_DOUBLE, mpitask, type, MPI_COMM_WORLD);
 			}
-			// Recalculate number of elements per section
-			number_elements_per_section = mpitask < extra ? base + 1 : base;
-
 			// point to next unsent or uncopied data in numbers array
 			begin_element += number_elements_per_section;
 		}
@@ -313,6 +306,12 @@ int main(int argc, char *argv[])
 	int numtasks, rank, num;
 	MPI_Status status;
 
+	// krr edits
+	int* scounts;
+	int* displs;
+	int displs_idx;
+	int base, extra;
+
 	// Initialize a value for the numbers pointer
 	// Should be able to remove this on dmc, visual studio just throws a fit about
 	// uninitialized pointer variables.
@@ -350,14 +349,9 @@ int main(int argc, char *argv[])
 	// krr going to have to edit this allocation so that the right number
 	// is allocated for each MPI task
 	// Pseudo code
-	int base = data_size / numtasks;
-	int extra = data_size % numtasks;
-	int num_items_per_section;
-	//group = rank < extra ? new (nothrow) double[base + 1] : new (nothrow) double[base];
-	if (rank < extra)
-		group = new (nothrow) double[base + 2];
-	else
-		group = new (nothrow) double[base + 1];
+	base = ceil((double)data_size / numtasks);
+	group = new (nothrow) double[base+1]; // everyone gets the same size
+
 
 	// dynamically allocate from heap the group array that will hold
 	// the partial set of numbers for each MPI process
@@ -367,25 +361,55 @@ int main(int argc, char *argv[])
 		MPI_Abort(MPI_COMM_WORLD, 1); // abort the MPI Environment
 	}
 
-	int* scounts = new (nothrow) int[numtasks];
-	int* displs = new (nothrow) int[numtasks];
+	scounts = new (nothrow) int[numtasks];
+	displs = new (nothrow) int[numtasks];
+	displs_idx = 0;
+
+	// Get the counts and displacements
+	for (int mpitask = 0; mpitask < numtasks; mpitask++)
+	{
+		if (base*(rank + 1) <= data_size)
+			scounts[mpitask] = base;
+		else if (base * rank < data_size)
+			scounts[mpitask] = data_size - base*rank;
+		else
+			scounts[mpitask] = 0;
+
+		displs[mpitask] = displs_idx;
+		displs_idx += scounts[mpitask];
+	}
 
 	// scatter the numbers matrix to all processing elements in
 	// the system
-	scatter(numbers, group, data_size, 0, rank, numtasks);
+	//scatter(numbers, group, data_size, 0, rank, numtasks);
 	// KRR TEST MPI_Scatterv
-	//MPI_Scatterv(numbers, scounts, displs, MPI_DOUBLE, group, num_items_per_section, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	//MPI_Scatter(numbers, data_size, MPI_DOUBLE, group, base + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Scatterv(numbers, scounts, displs, MPI_DOUBLE, group, base+1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+	
+	// Calculate the number in the group distribution
+	if (base*(rank + 1) <= data_size)
+		num_group = base;
+	else if (base * rank < data_size)
+		num_group = data_size - base*rank;
+	else
+		num_group = 0;
 
 	// sum up elements in the group associated with the
 	// current process
-	//num_group = data_size / numtasks; // determine local list size 
-	// group
-	num_group = rank < extra ? base + 1 : base;
 	pt_sum = 0;                       // clear out partial sum
 	min = 0;						  // initialize min
 	max = 0;						  // initialize max
 
 	for (i = 0; i < num_group; i++) {
+		if (rank == 0)
+		{
+			cout << "NumTasks " << numtasks << endl;
+			cout << "NumGroup " << num_group << endl;
+			cout << "Base " << base << endl;
+			cout << "DataSize " << data_size << endl;
+			cout << group[i] << " ";
+		}
 		pt_sum += group[i];
 		if (group[i] < min) min = group[i]; // Find the minimum of the group
 		if (group[i] > max) max = group[i]; // Find the maximum of the group
@@ -409,7 +433,7 @@ int main(int argc, char *argv[])
 
 	// output sum from root MPI process
 	if (rank == 0) {
-		cout << "Sum of numbers is " << setprecision(8) << sum << endl;
+		cout << "\n\n\nSum of numbers is " << setprecision(8) << sum << endl;
 		cout << "Minimum of numbers is " << setprecision(8) << min_final << endl;
 		cout << "Maximum of numbers is " << setprecision(8) << max_final << endl;
 	}
