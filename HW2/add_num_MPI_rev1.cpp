@@ -34,6 +34,16 @@ mpic++ add_num_MPI.cpp -o add_num_MPI
 To execute:
 mpiexec -np [num MPI process] add_num_MPI [num of numbers]
 
+EDIT: Kyle Ray
+CPE_512 Intro to Parallel Programming
+Homework #2
+September 21, 2017
+
+Addition:
+Allow each process to compute a local min and max.
+Report these to the root and have the root find the global min and max
+Report this to the user.
+
 */
 
 using namespace std;
@@ -44,8 +54,8 @@ using namespace std;
 #include <mpi.h> /* MPI Prototype Header Files */
 
 // Defines so that I can compile the code in visual studio
-#define srand48(s) srand(s)
-#define drand48() (((double)rand())/((double)RAND_MAX))
+//#define srand48(s) srand(s)
+//#define drand48() (((double)rand())/((double)RAND_MAX))
 
 #define SEED 2397            /* random number seed */
 #define MAX_VALUE   100.0    /* maximum value of any number in list */
@@ -56,27 +66,27 @@ Routine to transfer from the root MPI process the value of
 the 'int_num' parameter to all other MPI processes in the system.
 */
 void broadcast_int(int *int_num, int root, int rank, int numtasks) {
-	MPI_Status status;
+  MPI_Status status;
 
-	int type = 123;
+  int type = 123;
 
-	// root send value of int_num to each of the other processes
-	// using a locally blocking point-to-point send
-	if (rank == root) {
-		for (int mpitask = 0; mpitask<numtasks; mpitask++) {
-			if (mpitask != root) {
-				MPI_Send(int_num, 1, MPI_INT,
-					mpitask, type, MPI_COMM_WORLD);
-			}
-		}
-	}
-	// if not root process execute a blocking point-to-point receive
-	// with the source being to root process and direct this data to
-	// the local copy of 'int_num'
-	else {
-		MPI_Recv(int_num, 1, MPI_INT,
-			root, type, MPI_COMM_WORLD, &status);
-	}
+  // root send value of int_num to each of the other processes
+  // using a locally blocking point-to-point send
+  if (rank == root) {
+    for (int mpitask = 0; mpitask < numtasks; mpitask++) {
+      if (mpitask != root) {
+        MPI_Send(int_num, 1, MPI_INT,
+          mpitask, type, MPI_COMM_WORLD);
+      }
+    }
+  }
+  // if not root process execute a blocking point-to-point receive
+  // with the source being to root process and direct this data to
+  // the local copy of 'int_num'
+  else {
+    MPI_Recv(int_num, 1, MPI_INT,
+      root, type, MPI_COMM_WORLD, &status);
+  }
 
 }
 
@@ -88,46 +98,46 @@ by the MPI environment.
 */
 int get_data_size(int argc, char *argv[], int rank, int numtasks)
 {
-	string input = "";
-	int size;
+  string input = "";
+  int size;
 
-	// ERROR if too many command line arguments
-	if (argc > 2) {
-		if (rank == 0)
-			cout << "usage:  mpirun -np [num MPI tasks] add_num_MPI [data size]" << endl;
-		MPI_Finalize(); // Terminate MPI
-		exit(1); // Exit Program 
-	}
-	// One Command Line Argument Case:
-	// case where user did not enter number of numbers on command line
-	// In this case, only one of the MPI processes needs to communicate
-	// directly with the user. Since there will always be a MPI process
-	// with rank 0 this is the one that will perform the communication.
-	if (argc == 1) {
-		if (rank == 0) {
-			while (1) {
-				cout << "Enter the number of numbers to be added:" << endl;
-				getline(cin, input);
-				stringstream myStream(input);
-				if (myStream >> size) break;
-				cout << "Invalid Input" << endl << endl;
-			}
-		}
-		// since only the root MPI process is communicating with the
-		// user, the root process must send its value to all of the
-		// other MPI process. It can do this with the broadcast_int()
-		// broadcast routine.
-		broadcast_int(&size, 0, rank, numtasks);
-	}
-	// Two Command Line Argument case:
-	// user supplied the number of numbers on the command line.
-	// Each MPI process can retrieve it from there. No need to
-	// broadcast it to the other process because each have it at
-	// run time.
-	else {
-		size = atoi(argv[1]);
-	}
-	return size;
+  // ERROR if too many command line arguments
+  if (argc > 2) {
+    if (rank == 0)
+      cout << "usage:  mpirun -np [num MPI tasks] add_num_MPI [data size]" << endl;
+    MPI_Finalize(); // Terminate MPI
+    exit(1); // Exit Program 
+  }
+  // One Command Line Argument Case:
+  // case where user did not enter number of numbers on command line
+  // In this case, only one of the MPI processes needs to communicate
+  // directly with the user. Since there will always be a MPI process
+  // with rank 0 this is the one that will perform the communication.
+  if (argc == 1) {
+    if (rank == 0) {
+      while (1) {
+        cout << "Enter the number of numbers to be added:" << endl;
+        getline(cin, input);
+        stringstream myStream(input);
+        if (myStream >> size) break;
+        cout << "Invalid Input" << endl << endl;
+      }
+    }
+    // since only the root MPI process is communicating with the
+    // user, the root process must send its value to all of the
+    // other MPI process. It can do this with the broadcast_int()
+    // broadcast routine.
+    broadcast_int(&size, 0, rank, numtasks);
+  }
+  // Two Command Line Argument case:
+  // user supplied the number of numbers on the command line.
+  // Each MPI process can retrieve it from there. No need to
+  // broadcast it to the other process because each have it at
+  // run time.
+  else {
+    size = atoi(argv[1]);
+  }
+  return size;
 }
 
 /*
@@ -138,15 +148,15 @@ single sequential data acquisition source such as a single file
 */
 void fill_matrix(double *numbers, int data_size)
 {
-	int i;
-	srand48(SEED);
-	for (i = 0; i<data_size; i++) {
-		numbers[i] = drand48()*(MAX_VALUE - MIN_VALUE) + MIN_VALUE;
-		//to verify may want to initialize the numbers array with a pattern
-		//that has a known answer such as the sum of numbers from 0 to N-1
-		// The result of that summation is (N+1)*N/2!!
-		// numbers[i]=i; // to do so uncomment this line
-	}
+  int i;
+  srand48(SEED);
+  for (i = 0; i < data_size; i++) {
+    numbers[i] = drand48()*(MAX_VALUE - MIN_VALUE) + MIN_VALUE;
+    //to verify may want to initialize the numbers array with a pattern
+    //that has a known answer such as the sum of numbers from 0 to N-1
+    // The result of that summation is (N+1)*N/2!!
+    // numbers[i]=i; // to do so uncomment this line
+  }
 }
 
 /*
@@ -154,10 +164,10 @@ Routine that outputs the numbers matrix to the screen
 */
 void print_matrix(double *numbers, int data_size)
 {
-	int i;
-	for (i = 0; i<data_size; i++) {
-		cout << numbers[i] << endl;
-	}
+  int i;
+  for (i = 0; i < data_size; i++) {
+    cout << numbers[i] << endl;
+  }
 }
 
 
@@ -170,42 +180,42 @@ group data associated with the current process is given by the
 '*group' parameter.  */
 void scatter(double *numbers, double *group, int num_size, int root, int rank, int numtasks)
 {
-	MPI_Status status;
-	int type = 234;
+  MPI_Status status;
+  int type = 234;
 
-	// determine number of elements in subarray groups to be processed by
-	// each MPI process assuming a perfectly even distribution of elements 
-	int number_elements_per_section = num_size / numtasks;
+  // determine number of elements in subarray groups to be processed by
+  // each MPI process assuming a perfectly even distribution of elements 
+  int number_elements_per_section = num_size / numtasks;
 
-	// if root MPI process send portion of numbers array to each of the
-	// the other MPI processes as well as make a copy of the portion
-	// of the numbers array that is slated for the root MPI process
-	if (rank == root) {
-		int begin_element = 0;
+  // if root MPI process send portion of numbers array to each of the
+  // the other MPI processes as well as make a copy of the portion
+  // of the numbers array that is slated for the root MPI process
+  if (rank == root) {
+    int begin_element = 0;
 
-		for (int mpitask = 0; mpitask<numtasks; mpitask++) {
+    for (int mpitask = 0; mpitask < numtasks; mpitask++) {
 
-			// in MPI root process case just copy the appropriate subsection
-			// locally from the numbers array over to the group array
-			if (mpitask == root) {
-				for (int i = 0; i<number_elements_per_section; i++)
-					group[i] = numbers[i + begin_element];
-			}
-			// if not the root process send the subsection data to
-			// the next MPI process
-			else {
-				MPI_Send(&numbers[begin_element], number_elements_per_section,
-					MPI_DOUBLE, mpitask, type, MPI_COMM_WORLD);
-			}
-			// point to next unsent or uncopied data in numbers array
-			begin_element += number_elements_per_section;
-		}
-	}
-	// if a non root process just receive the data
-	else {
-		MPI_Recv(group, number_elements_per_section, MPI_DOUBLE,
-			root, type, MPI_COMM_WORLD, &status);
-	}
+      // in MPI root process case just copy the appropriate subsection
+      // locally from the numbers array over to the group array
+      if (mpitask == root) {
+        for (int i = 0; i < number_elements_per_section; i++)
+          group[i] = numbers[i + begin_element];
+      }
+      // if not the root process send the subsection data to
+      // the next MPI process
+      else {
+        MPI_Send(&numbers[begin_element], number_elements_per_section,
+          MPI_DOUBLE, mpitask, type, MPI_COMM_WORLD);
+      }
+      // point to next unsent or uncopied data in numbers array
+      begin_element += number_elements_per_section;
+    }
+  }
+  // if a non root process just receive the data
+  else {
+    MPI_Recv(group, number_elements_per_section, MPI_DOUBLE,
+      root, type, MPI_COMM_WORLD, &status);
+  }
 }
 /*
 ALL-TO-ONE Reduce ROUTINE
@@ -218,68 +228,68 @@ the global sum (summation of all partial sums).
 */
 void reduce(double *sum, double *partial_sum, int root, int rank, int numtasks)
 {
-	MPI_Status status;
-	int type = 123;
-	// if MPI root process sum up results from the other p-1 processes
-	if (rank == root) {
-		*sum = *partial_sum;
-		for (int mpitask = 0; mpitask<numtasks; mpitask++) {
-			if (mpitask != root) {
-				MPI_Recv(partial_sum, 1, MPI_DOUBLE,
-					mpitask, type, MPI_COMM_WORLD, &status);
-				(*sum) += (*partial_sum);
-			}
-		}
-	}
-	// if not root MPI root process then send partial sum to the root  
-	else {
-		MPI_Send(partial_sum, 1, MPI_DOUBLE,
-			root, type, MPI_COMM_WORLD);
-	}
+  MPI_Status status;
+  int type = 123;
+  // if MPI root process sum up results from the other p-1 processes
+  if (rank == root) {
+    *sum = *partial_sum;
+    for (int mpitask = 0; mpitask < numtasks; mpitask++) {
+      if (mpitask != root) {
+        MPI_Recv(partial_sum, 1, MPI_DOUBLE,
+          mpitask, type, MPI_COMM_WORLD, &status);
+        (*sum) += (*partial_sum);
+      }
+    }
+  }
+  // if not root MPI root process then send partial sum to the root  
+  else {
+    MPI_Send(partial_sum, 1, MPI_DOUBLE,
+      root, type, MPI_COMM_WORLD);
+  }
 }
 
 void reduceMin(double *min, int root, int rank, int numtasks)
 {
-	MPI_Status status;
-	int type = 123;
-	double localMin = MAX_VALUE;
-	// if MPI root process sum up results from the other p-1 processes
-	if (rank == root) {
-		for (int mpitask = 0; mpitask<numtasks; mpitask++) {
-			if (mpitask != root) {
-				MPI_Recv(&localMin, 1, MPI_DOUBLE,
-					mpitask, type, MPI_COMM_WORLD, &status);
-				if (localMin < *min) *min = localMin;
-			}
-		}
-	}
-	// if not root MPI root process then send partial sum to the root  
-	else {
-		MPI_Send(min, 1, MPI_DOUBLE,
-			root, type, MPI_COMM_WORLD);
-	}
+  MPI_Status status;
+  int type = 123;
+  double localMin = MAX_VALUE;
+  // if MPI root process grab minimums from the other p-1 processes
+  if (rank == root) {
+    for (int mpitask = 0; mpitask < numtasks; mpitask++) {
+      if (mpitask != root) {
+        MPI_Recv(&localMin, 1, MPI_DOUBLE,
+          mpitask, type, MPI_COMM_WORLD, &status);
+        if (localMin < *min) *min = localMin;
+      }
+    }
+  }
+  // if not root MPI root process then send min to the root  
+  else {
+    MPI_Send(min, 1, MPI_DOUBLE,
+      root, type, MPI_COMM_WORLD);
+  }
 }
 
 void reduceMax(double *max, int root, int rank, int numtasks)
 {
-	MPI_Status status;
-	int type = 123;
-	double localMax = MIN_VALUE;
-	// if MPI root process sum up results from the other p-1 processes
-	if (rank == root) {
-		for (int mpitask = 0; mpitask<numtasks; mpitask++) {
-			if (mpitask != root) {
-				MPI_Recv(&localMax, 1, MPI_DOUBLE,
-					mpitask, type, MPI_COMM_WORLD, &status);
-				if (localMax > *max) *max = localMax;
-			}
-		}
-	}
-	// if not root MPI root process then send partial sum to the root  
-	else {
-		MPI_Send(max, 1, MPI_DOUBLE,
-			root, type, MPI_COMM_WORLD);
-	}
+  MPI_Status status;
+  int type = 123;
+  double localMax = MIN_VALUE;
+  // if MPI root process grab the maximums from the other p-1 processes
+  if (rank == root) {
+    for (int mpitask = 0; mpitask < numtasks; mpitask++) {
+      if (mpitask != root) {
+        MPI_Recv(&localMax, 1, MPI_DOUBLE,
+          mpitask, type, MPI_COMM_WORLD, &status);
+        if (localMax > *max) *max = localMax;
+      }
+    }
+  }
+  // if not root MPI root process then send max to the root  
+  else {
+    MPI_Send(max, 1, MPI_DOUBLE,
+      root, type, MPI_COMM_WORLD);
+  }
 }
 
 /*
@@ -288,91 +298,91 @@ MAIN ROUTINE: summation of numbers in a list
 
 int main(int argc, char *argv[])
 {
-	double *numbers, *group;
-	double sum, pt_sum, min, max;
-	int data_size, group_size, num_group, i;
-	int numtasks, rank, num;
-	MPI_Status status;
+  double *numbers, *group;
+  double sum, pt_sum, min, max;
+  int data_size, group_size, num_group, i;
+  int numtasks, rank, num;
+  MPI_Status status;
 
-	// Initialize a value for the numbers pointer
-	// Should be able to remove this on dmc, visual studio just throws a fit about
-	// uninitialized pointer variables.
-	double meaningOfLife = 42;
-	numbers = &meaningOfLife;
+  // Initialize a value for the numbers pointer
+  // Should be able to remove this on dmc, visual studio just throws a fit about
+  // uninitialized pointer variables.
+  //double meaningOfLife = 42;
+  //numbers = &meaningOfLife;
 
-	MPI_Init(&argc, &argv); // initalize MPI environment
-	MPI_Comm_size(MPI_COMM_WORLD, &numtasks); // get total number of MPI processes
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get unique task id number 
+  MPI_Init(&argc, &argv); // initalize MPI environment
+  MPI_Comm_size(MPI_COMM_WORLD, &numtasks); // get total number of MPI processes
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get unique task id number 
 
-										  //get data size from command line or prompt
-										  //the user for input
-	data_size = get_data_size(argc, argv, rank, numtasks);
+                      //get data size from command line or prompt
+                      //the user for input
+  data_size = get_data_size(argc, argv, rank, numtasks);
 
-	//  if root MPI Process (0) then
-	if (rank == 0) {
-		// dynamically allocate from heap the numbers array on the root process
-		numbers = new (nothrow) double[data_size];
-		if (numbers == 0) { // check for null pointer
-			cout << "Memory Allocation Error on Root for numbers array"
-				<< endl << flush;
-			MPI_Abort(MPI_COMM_WORLD, 1); // abort the MPI Environment
-		}
+  //  if root MPI Process (0) then
+  if (rank == 0) {
+    // dynamically allocate from heap the numbers array on the root process
+    numbers = new (nothrow) double[data_size];
+    if (numbers == 0) { // check for null pointer
+      cout << "Memory Allocation Error on Root for numbers array"
+        << endl << flush;
+      MPI_Abort(MPI_COMM_WORLD, 1); // abort the MPI Environment
+    }
 
-		// initialize numbers matrix with random data
-		fill_matrix(numbers, data_size);
+    // initialize numbers matrix with random data
+    fill_matrix(numbers, data_size);
 
-		// and print the numbers matrix
-		cout << "numbers matrix =" << endl;
-		print_matrix(numbers, data_size);
-		cout << endl;
-	}
+    // and print the numbers matrix
+    /*cout << "numbers matrix =" << endl;
+    print_matrix(numbers, data_size);
+    cout << endl;*/
+  }
 
-	// dynamically allocate from heap the group array that will hold
-	// the partial set of numbers for each MPI process
-	group = new (nothrow) double[data_size / numtasks + 1];
-	if (group == 0) { // check for null pointer to group
-		cout << "Memory Allocation Error" << endl << flush;
-		MPI_Abort(MPI_COMM_WORLD, 1); // abort the MPI Environment
-	}
+  // dynamically allocate from heap the group array that will hold
+  // the partial set of numbers for each MPI process
+  group = new (nothrow) double[data_size / numtasks + 1];
+  if (group == 0) { // check for null pointer to group
+    cout << "Memory Allocation Error" << endl << flush;
+    MPI_Abort(MPI_COMM_WORLD, 1); // abort the MPI Environment
+  }
 
-	// scatter the numbers matrix to all processing elements in
-	// the system
-	scatter(numbers, group, data_size, 0, rank, numtasks);
+  // scatter the numbers matrix to all processing elements in
+  // the system
+  scatter(numbers, group, data_size, 0, rank, numtasks);
 
-	// sum up elements in the group associated with the
-	// current process
-	num_group = data_size / numtasks; // determine local list size 
-									  // group
-	pt_sum = 0;                       // clear out partial sum
-	min = 0;						  // initialize min
-	max = 0;						  // initialize max
+  // sum up elements in the group associated with the
+  // current process
+  num_group = data_size / numtasks; // determine local list size 
+                    // group
+  pt_sum = 0;                       // clear out partial sum
+  min = 0;						  // initialize min
+  max = 0;						  // initialize max
 
-	for (i = 0; i < num_group; i++) {
-		pt_sum += group[i];
-		if (group[i] < min) min = group[i]; // Find the minimum of the group
-		if (group[i] > max) max = group[i]; // Find the maximum of the group
-	}
-	
-	// obtain final sum by summing up partial sums from other MPI tasks
-	// obtain a global minimum by comparing local minimums from other MPI tasks
-	// obtain a global maximum by comparing local maximums from other MPI tasks
-	reduce(&sum, &pt_sum, 0, rank, numtasks);
-	reduceMin(&min, 0, rank, numtasks);
-	reduceMax(&max, 0, rank, numtasks);
+  for (i = 0; i < num_group; i++) {
+    pt_sum += group[i];
+    if (group[i] < min) min = group[i]; // Find the minimum of the group
+    if (group[i] > max) max = group[i]; // Find the maximum of the group
+  }
 
-	// output sum from root MPI process
-	if (rank == 0) {
-		cout << "Sum of numbers is " << setprecision(8) << sum << endl;
-		cout << "Minimum of numbers is " << setprecision(8) << min << endl;
-		cout << "Maximum of numbers is " << setprecision(8) << max << endl;
-	}
+  // obtain final sum by summing up partial sums from other MPI tasks
+  // obtain a global minimum by comparing local minimums from other MPI tasks
+  // obtain a global maximum by comparing local maximums from other MPI tasks
+  reduce(&sum, &pt_sum, 0, rank, numtasks);
+  reduceMin(&min, 0, rank, numtasks);
+  reduceMax(&max, 0, rank, numtasks);
 
-	// reclaim dynamiclly allocated memory
-	if (rank == 0) delete numbers;
-	delete group;
+  // output sum from root MPI process
+  if (rank == 0) {
+    cout << "Sum of numbers is " << setprecision(8) << sum << endl;
+    cout << "Minimum of numbers is " << setprecision(8) << min << endl;
+    cout << "Maximum of numbers is " << setprecision(8) << max << endl;
+  }
 
-	// Terminate MPI Program -- perform necessary MPI housekeeping
-	// clear out all buffers, remove handlers, etc.
-	MPI_Finalize();
+  // reclaim dynamiclly allocated memory
+  if (rank == 0) delete numbers;
+  delete group;
+
+  // Terminate MPI Program -- perform necessary MPI housekeeping
+  // clear out all buffers, remove handlers, etc.
+  MPI_Finalize();
 }
 

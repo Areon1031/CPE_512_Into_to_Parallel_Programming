@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\HW2\add_num_MPI_rev2.cpp" />
     <ClCompile Include="..\..\HW2\add_num_MPI_rev3.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
