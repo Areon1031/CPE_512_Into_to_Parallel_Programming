@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CPE_512_Intro_to_Parallel_Programming", "CPE_512_Intro_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming.vcxproj", "{0D86D77B-5365-4EB4-A9C8-777C8F69FA3A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ADD_NUM_MPI", "CPE_512_Intro_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming.vcxproj", "{0D86D77B-5365-4EB4-A9C8-777C8F69FA3A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MM_MULT_MPI", "MM_MULT_MPI\MM_MULT_MPI.vcxproj", "{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,14 @@ Global
 		{0D86D77B-5365-4EB4-A9C8-777C8F69FA3A}.Release|x64.Build.0 = Release|x64
 		{0D86D77B-5365-4EB4-A9C8-777C8F69FA3A}.Release|x86.ActiveCfg = Release|Win32
 		{0D86D77B-5365-4EB4-A9C8-777C8F69FA3A}.Release|x86.Build.0 = Release|Win32
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Debug|x64.ActiveCfg = Debug|x64
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Debug|x64.Build.0 = Debug|x64
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Debug|x86.ActiveCfg = Debug|Win32
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Debug|x86.Build.0 = Debug|Win32
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Release|x64.ActiveCfg = Release|x64
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Release|x64.Build.0 = Release|x64
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Release|x86.ActiveCfg = Release|Win32
+		{47AAB270-7EC8-4655-B6F8-2401C7ADDA9F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

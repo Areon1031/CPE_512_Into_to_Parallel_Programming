@@ -1,0 +1,4 @@
+﻿  mm_mult_serial.cpp
+e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_serial.cpp(118): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  MM_MULT_MPI.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\MM_MULT_MPI.exe
+  MM_MULT_MPI.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\MM_MULT_MPI.pdb (Partial PDB)
