@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\HW3\mm_mult_serial.cpp">
+    <ClCompile Include="..\..\HW3\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

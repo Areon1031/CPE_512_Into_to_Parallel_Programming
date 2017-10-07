@@ -21,5 +21,8 @@
     <ClCompile Include="..\..\HW2\add_num_MPI_rev3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\HW2\add_num_MPI_rev1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
