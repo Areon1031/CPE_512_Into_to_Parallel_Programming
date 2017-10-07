@@ -54,8 +54,8 @@ using namespace std;
 #include <mpi.h> /* MPI Prototype Header Files */
 
 // Defines so that I can compile the code in visual studio
-//#define srand48(s) srand(s)
-//#define drand48() (((double)rand())/((double)RAND_MAX))
+#define srand48(s) srand(s)
+#define drand48() (((double)rand())/((double)RAND_MAX))
 
 #define SEED 2397            /* random number seed */
 #define MAX_VALUE   100.0    /* maximum value of any number in list */

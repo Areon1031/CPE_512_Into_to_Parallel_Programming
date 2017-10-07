@@ -8,8 +8,8 @@ using namespace std;
 // TODO: Implement the dot product for each
 // TODO: Implement the gather routine and assemble the final matrix
 
-int a[6]  = { 1, 2, 3, 4, 5, 6 }; // 2 x 3
-int b[12] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // 3 x 4
+//int a[6]  = { 1, 2, 3, 4, 5, 6 }; // 2 x 3
+//int b[12] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // 3 x 4
 
 //int a[9] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 }; // 3 x 3
 //int b[6] = { 1, 2, 3, 4, 5, 6 }; // 3 x 2
@@ -23,9 +23,12 @@ int b[12] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // 3 x 4
 //int a[6] = { 1, 2, 3, 4, 5, 6 }; // 3 x 2
 //int b[2] = { 1, 2 }; // 2 x 1
 
-int dim_l = 2;
-int dim_m = 3;
-int dim_n = 4;
+int a[2] = { 1, 2 }; // 1 x 2
+int b[6] = { 1, 2, 3, 4, 5, 6 }; // 2 x 3
+
+int dim_l = 1;
+int dim_m = 2;
+int dim_n = 3;
 
 
 int main(int argc, char* argv[])
