@@ -15,7 +15,7 @@
 /*
    This program is designed to perform matrix matrix multiplication
    A x B = C, where A is an lxm matrix, B is a m x n matrix and
-   C is a l x n matrix. The program is designed to be a template 
+   C is a l x n matrix. The program is designed to be a template
    serial program that can be expanded into a parallel multiprocess
    and/or a multi-threaded program.
 
@@ -27,13 +27,13 @@
    The program is executed using one or three command line parameters.
    These parameters represent the dimension of the matrices. If only
    one parameter is used then then it is assumed that square matrices are
-   to be created and multiplied together that have the specified 
+   to be created and multiplied together that have the specified
    dimension. In cases where three command line parameters are entered
    then the first parameter is the l dimension, the second the m, and
    the third is the n dimension.
 
    To execute:
-   mm_mult_serial [l_parameter] <m_parameter n_parameter> 
+   mm_mult_serial [l_parameter] <m_parameter n_parameter>
 */
 
 using namespace std;
@@ -63,9 +63,9 @@ using namespace std;
 
 
 /*
-This declaration facilitates the creation of a two dimensional 
+This declaration facilitates the creation of a two dimensional
 dynamically allocated arrays (i.e. the lxm A array, the mxn B
-array, and the lxn C array).  It allows pointer arithmetic to 
+array, and the lxn C array).  It allows pointer arithmetic to
 be applied to a single data stream that can be dynamically allocated.
 To address the element at row x, and column y you would use the
 following notation:  A(x,y),B(x,y), or C(x,y), respectively.
@@ -73,66 +73,74 @@ Note that this differs from the normal C notation if A were a
 two dimensional array of A[x][y] but is still very descriptive
 of the data structure.
 */
-float *a,*b,*c;
+float *a, *b, *c;
 #define A(i,j) *(a+i*dim_m+j)
 #define B(i,j) *(b+i*dim_n+j)
 #define C(i,j) *(c+i*dim_n+j)
 
 /*
-   Routine to retrieve the data size of the numbers array from the 
+   Routine to retrieve the data size of the numbers array from the
    command line or by prompting the user for the information
 */
-void get_index_size(int argc,char *argv[],int *dim_l,int *dim_m,int *dim_n) {
-   if(argc!=2 && argc!=4) {
-      cout<<"usage:  mm_mult_serial [l_dimension] <m_dimension n_dimmension>"
-           << endl;
+void get_index_size(int argc, char *argv[], int *dim_l, int *dim_m, int *dim_n, int rank) {
+  if (argc != 2 && argc != 4) {
+    if (rank == 0)
+    {
+      cout << "usage:  mm_mult_serial [l_dimension] <m_dimension n_dimmension>"
+        << endl;
+      MPI_Finalize();
       exit(1);
-   }
-   else {
-      if (argc == 2) {
-         *dim_l = *dim_n = *dim_m = atoi(argv[1]);
-      }
-      else {
-         *dim_l = atoi(argv[1]);
-         *dim_m = atoi(argv[2]);
-         *dim_n = atoi(argv[3]);
-      }
-   }
-   if (*dim_l<=0 || *dim_n<=0 || *dim_m<=0) {
-      cout<<"Error: number of rows and/or columns must be greater than 0"
-          << endl;
+    }
+  }
+  else {
+    if (argc == 2) {
+      *dim_l = *dim_n = *dim_m = atoi(argv[1]);
+    }
+    else {
+      *dim_l = atoi(argv[1]);
+      *dim_m = atoi(argv[2]);
+      *dim_n = atoi(argv[3]);
+    }
+  }
+  if (rank == 0)
+  {
+    if (*dim_l <= 0 || *dim_n <= 0 || *dim_m <= 0) {
+      cout << "Error: number of rows and/or columns must be greater than 0"
+        << endl;
+      MPI_Finalize();
       exit(1);
-   }
+    }
+  }
 }
 
 /*
    Routine that fills the number matrix with Random Data with values
    between 0 and MAX_VALUE
-   This simulates in some way what might happen if there was a 
+   This simulates in some way what might happen if there was a
    single sequential data acquisition source such as a single file
 */
-void fill_matrix(float *array,int dim_m,int dim_n)
+void fill_matrix(float *array, int dim_m, int dim_n)
 {
-   int i,j;
-   for(i=0;i<dim_m;i++) {
-      for (j=0;j<dim_n;j++) {
-         array[i*dim_n+j]=drand48()*MAX_VALUE;
-      }
-   }
+  int i, j;
+  for (i = 0; i < dim_m; i++) {
+    for (j = 0; j < dim_n; j++) {
+      array[i*dim_n + j] = drand48()*MAX_VALUE;
+    }
+  }
 }
 
 /*
-   Routine that outputs the matrices to the screen 
+   Routine that outputs the matrices to the screen
 */
-void print_matrix(float *array,int dim_m,int dim_n)
+void print_matrix(float *array, int dim_m, int dim_n)
 {
-   int i,j;
-   for(i=0;i<dim_m;i++) {
-      for (j=0;j<dim_n;j++) {
-         cout << array[i*dim_n+j] << " ";
-      }
-      cout << endl;
-   }
+  int i, j;
+  for (i = 0; i < dim_m; i++) {
+    for (j = 0; j < dim_n; j++) {
+      cout << array[i*dim_n + j] << " ";
+    }
+    cout << endl;
+  }
 }
 
 /*
@@ -172,43 +180,132 @@ The number data size is given by the'num_size' parameter its source
 address is given by the '*numbers' parameter, and the destination
 group data associated with the current process is given by the
 '*group' parameter.  */
-void scatter(float *numbers, float* group, int num_size, int root, int rank, int numtasks)
+void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, int root, int rank, int numtasks, int dim_l, int dim_m, int dim_n, int* begin_column)
 {
   MPI_Status status;
   int type = 234;
 
-  // determine number of elements in subarray groups to be processed by
-  // each MPI process assuming a perfectly even distribution of elements 
-  int number_elements_per_section = num_size / numtasks;
+  int num_mults = 0;
+  if (dim_l == 1)
+    num_mults = dim_n;
+  else if (dim_n == 1)
+    num_mults = dim_l;
+  else
+    num_mults = dim_l * dim_n;
 
-  // if root MPI process send portion of numbers array to each of the
-  // the other MPI processes as well as make a copy of the portion
-  // of the numbers array that is slated for the root MPI process
-  if (rank == root) {
-    int begin_element = 0;
+  int local_a[200];
+  int local_b[200];
 
-    for (int mpitask = 0; mpitask < numtasks; mpitask++) {
+  int row_ind = 0;
+  int col_ind = 0;
 
-      // in MPI root process case just copy the appropriate subsection
-      // locally from the numbers array over to the group array
-      if (mpitask == root) {
-        for (int i = 0; i < number_elements_per_section; i++)
-          group[i] = numbers[i + begin_element];
+  // Variables to keep up with what row and column we are reading from
+  int begin_row = 0;
+  begin_column = 0;
+
+  if (rank == root)
+  {
+    // Loop over the MPI tasks
+    for (int j = 0; j < numtasks; j++)
+    {
+      // Calculate the base number of multiplies for each task
+      int base = num_mults / numtasks;
+
+      // Calculate the extra if it is not an even distribution
+      int extra = num_mults % numtasks;
+
+      // If there are any extra assign them to the first tasks up to rank of extra
+      if (extra != 0)
+      {
+        // If rank is less than the number of extra items, then this process gets an extra multiply to process
+        if (j < extra)
+          base = (num_mults / numtasks) + 1;
       }
-      // if not the root process send the subsection data to
-      // the next MPI process
-      else {
-        MPI_Send(&numbers[begin_element], number_elements_per_section,
-          MPI_DOUBLE, mpitask, type, MPI_COMM_WORLD);
+
+      // Each task gets at least one row to work with
+      int num_rows = 1;
+
+      // Variables to keep up with navigating the matrices
+      int count = base;
+      int curr_col = *begin_column;
+
+      // Calculate the number of rows that we need to send to the process.
+      while (count > 0)
+      {
+        // Get the current distance from the end of dim_n
+        int diff = dim_n - curr_col;
+
+        // If we have more multiplies to process then left for this row, we must add another row
+        if (count > diff)
+        {
+          num_rows++;
+          count -= diff;
+          curr_col = 0;
+          continue;
+        }
+
+        count -= dim_n;
       }
-      // point to next unsent or uncopied data in numbers array
-      begin_element += number_elements_per_section;
+
+      // Reset our column check and multiply count
+      curr_col = *begin_column;
+      count = base;
+
+      // Row assignment
+      for (int r = 0; r < num_rows; r++)
+      {
+        // Fill up the local matrix with values from the main A matrix
+        for (int t = 0; t < dim_m; t++)
+        {
+          local_a[r*dim_m + t] = a[begin_row*dim_m + t];
+        }
+
+        // Calculate the distance from the end of dim_n for this set of row multiplications
+        int diff = dim_n - curr_col;
+
+        // If we still have more to process we must add the next row to this processes variables
+        if (diff <= count)
+        {
+          begin_row++;
+          count -= diff;
+          curr_col = 0;
+        }
+      }
+
+      // Column Assignment
+      // This will put the columns in a matrix starting with the last column used for a multiplication
+      // This could be cleaned up by broadcasting the entire matrix to each process but I feel that this might be faster with larger 
+      // matrices as there won't be as much duplication.
+      for (int i = 0; i < base; i++)
+      {
+        // Fill up the local matrix with values from the B matrix
+        for (int k = 0; k < dim_m; k++)
+        {
+          local_b[i*dim_m + k] = b[*begin_column + k*dim_n];
+        }
+
+        // Keep up with the current dim_n column that we processed
+        if (*begin_column != 0 && (*begin_column % (dim_n - 1) == 0))
+          *begin_column = 0;
+        else if ((*begin_column + 1) != dim_n) // can't exceed the dim_n for current column
+          (*begin_column)++;
+      }
+
+      // This should work for every other process, but I need to make sure that the root keeps what it needs
+      if (j != root)
+      {
+        // Send the data to the other processes
+        MPI_Send(local_a, num_rows*dim_m, MPI_FLOAT, j, type, MPI_COMM_WORLD);
+        MPI_Send(local_b, base*dim_m, MPI_FLOAT, j, type, MPI_COMM_WORLD);
+        MPI_Send(begin_column, 1, MPI_INT, j, type, MPI_COMM_WORLD);
+      }
     }
   }
-  // if a non root process just receive the data
-  else {
-    MPI_Recv(group, number_elements_per_section, MPI_DOUBLE,
-      root, type, MPI_COMM_WORLD, &status);
+  else
+  {
+    MPI_Recv(a, dim_l*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
+    MPI_Recv(b, dim_l*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
+    MPI_Recv(begin_column, 1, MPI_INT, root, type, MPI_COMM_WORLD, &status);
   }
 }
 /*
@@ -246,133 +343,142 @@ void reduce(float* sum, float* partial_sum, int root, int rank, int numtasks)
    MAIN ROUTINE: summation of a number list
 */
 
-int main( int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-   float dot_prod;
-   int dim_l,dim_n,dim_m;
-   int i,j,k;
+  float dot_prod;
+  int dim_l, dim_n, dim_m;
+  int i, j, k;
 
-   int num_mults, group_size, num_group, i;
-   int numtasks, rank, num;
-   MPI_Status status;
+  int num_mults, group_size, num_group, i;
+  int numtasks, rank, num;
+  int start_column;
+  MPI_Status status;
 
-   // Main Routine
+  // Main Routine
 
-   MPI_Init(&argc, &argv); // initalize MPI environment
-   MPI_Comm_size(MPI_COMM_WORLD, &numtasks); // get total number of MPI processes
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get unique task id number 
-
-   
-   // get matrix sizes
-   get_index_size(argc, argv, &dim_l, &dim_m, &dim_n);
-  
-   if (rank == 0)
-   {
-     // dynamically allocate from heap the numbers in the memory space
-     // for the a,b, and c matrices 
-     a = new (nothrow) float[dim_l*dim_m];
-     b = new (nothrow) float[dim_m*dim_n];
-     c = new (nothrow) float[dim_l*dim_n];
-     if (a == 0 || b == 0 || c == 0) 
-     {
-       cout << "ERROR:  Insufficient Memory" << endl;
-       exit(1);
-     }
-
-     /*
-        initialize numbers matrix with random data
-     */
-     srand48(SEED);
-     fill_matrix(a, dim_l, dim_m);
-     fill_matrix(b, dim_m, dim_n);
-
-     /*
-       output numbers matrix
-     */
-     cout << "A matrix =" << endl;
-     print_matrix(a, dim_l, dim_m);
-     cout << endl;
-
-     cout << "B matrix =" << endl;
-     print_matrix(b, dim_m, dim_n);
-     cout << endl;
-
-     
-     // Broadcast the number of multiplies to each process.
-     //broadcast_int(&num_mults, 0, 0, numtasks);
-     //MPI_Bcast(&num_mults, 1, MPI_INT, 0, MPI_COMM_WORLD);
-   }
-
-   // broad cast the data size, which is really the number of multiplies
-   if (dim_l == 1)
-     num_mults = dim_n;
-   else if (dim_n == 1)
-     num_mults = dim_l;
-   else
-     num_mults = dim_l * dim_n;
-
-   int base = num_mults / numtasks;
-   int extra = num_mults % numtasks;
-
-   if (rank > 0)
-   {
-     // Just need to allocate enough space to hold the rows that the process will receive
-     // The below will need to change, but this is fine for now.
-
-     // Each process granted that num_mults >= numtasks should have at least one row and one column to perform a dot product on.
-     /*a = new (nothrow) float[rank < extra ? base*dim_m : (base - 1)*dim_m];
-     b = new (nothrow) float[rank < extra ? base*dim_m : (base - 1)*dim_m];*/
-     
-     if (a == 0 || b == 0) 
-     {
-       cout << "ERROR:  Insufficient Memory" << endl;
-       exit(1);
-     }
-   }
+  MPI_Init(&argc, &argv); // initalize MPI environment
+  MPI_Comm_size(MPI_COMM_WORLD, &numtasks); // get total number of MPI processes
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get unique task id number 
 
 
-   // Scatter the Data
-   // The root process needs to scatter the correct amount of data to each process.
-   scatter(a, b, 1, 0, rank, numtasks);
+  // get matrix sizes
+  get_index_size(argc, argv, &dim_l, &dim_m, &dim_n, rank);
+
+  // The root process fills the matrices and then passes them to the othe processes
+  if (rank == 0)
+  {
+    // dynamically allocate from heap the numbers in the memory space
+    // for the a,b, and c matrices 
+    a = new (nothrow) float[dim_l*dim_m];
+    b = new (nothrow) float[dim_m*dim_n];
+    c = new (nothrow) float[dim_l*dim_n];
+    if (a == 0 || b == 0 || c == 0)
+    {
+      cout << "ERROR:  Insufficient Memory" << endl;
+      exit(1);
+    }
+
+    start_column = 0;
+
+    /*
+       initialize numbers matrix with random data
+    */
+    srand48(SEED);
+    fill_matrix(a, dim_l, dim_m);
+    fill_matrix(b, dim_m, dim_n);
+
+    /*
+      output numbers matrix
+    */
+    cout << "A matrix =" << endl;
+    print_matrix(a, dim_l, dim_m);
+    cout << endl;
+
+    cout << "B matrix =" << endl;
+    print_matrix(b, dim_m, dim_n);
+    cout << endl;
 
 
-   // Each process will start working on the data here
+    // Broadcast the number of multiplies to each process.
+    //broadcast_int(&num_mults, 0, 0, numtasks);
+    //MPI_Bcast(&num_mults, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  }
 
-   /*
-   Start recording the execution time
-   */
-   /*TIMER_CLEAR;
-   TIMER_START;*/
+  // broad cast the data size, which is really the number of multiplies
+  if (dim_l == 1)
+    num_mults = dim_n;
+  else if (dim_n == 1)
+    num_mults = dim_l;
+  else
+    num_mults = dim_l * dim_n;
 
-   // multiply local part of matrix
-   for (i=0;i<dim_l;i++) {
-      for (j=0;j<dim_n;j++) {
-         dot_prod = 0.0;
-         // Need to use this loop to send the arrays to both for the dot product
-         for (k=0;k<dim_m;k++) {
-            dot_prod += A(i,k)*B(k,j);
-         }
-         C(i,j) = dot_prod;
+  int base = num_mults / numtasks;
+  int extra = num_mults % numtasks;
+
+  if (rank > 0)
+  {
+    // Just need to allocate enough space to hold the rows that the process will receive
+    // The below will need to change, but this is fine for now.
+
+
+    // Each process granted that num_mults >= numtasks should have at least one row and one column to perform a dot product on.
+    //a = new (nothrow) float[rank < extra ? base*dim_m : (base - 1)*dim_m];
+    //b = new (nothrow) float[rank < extra ? base*dim_m : (base - 1)*dim_m];
+    a = new (nothrow) float[dim_l * dim_n]; // don't care about the size right now, memory is cheaper than run time
+    b = new (nothrow) float[dim_l * dim_n]; 
+    c = new (nothrow) float[dim_l * dim_n];
+
+    start_column = 0;
+
+    if (a == 0 || b == 0)
+    {
+      cout << "ERROR:  Insufficient Memory" << endl;
+      exit(1);
+    }
+  }
+
+  // Scatter the Data
+  // The root process needs to scatter the correct amount of data to each process.
+  scatter(a, b, 1, 0, rank, numtasks, dim_l, dim_m, dim_n, start_column);
+
+
+  // Each process will start working on the data here
+
+  /*
+  Start recording the execution time
+  */
+  /*TIMER_CLEAR;
+  TIMER_START;*/
+
+  // multiply local part of matrix
+  for (i = 0; i < dim_l; i++) {
+    for (j = 0; j < dim_n; j++) {
+      dot_prod = 0.0;
+      // Need to use this loop to send the arrays to both for the dot product
+      for (k = 0; k < dim_m; k++) {
+        dot_prod += A(i, k)*B(k, j);
       }
-   }
-   
-   // Gather, each process will send the results of the dot product back to the main routine
-   // The main routine will then put the final lxn matrix back together.
+      C(i, j) = dot_prod;
+    }
+  }
 
-   /*
-      stop recording the execution time
-   */ 
-   //TIMER_STOP;
+  // Gather, each process will send the results of the dot product back to the main routine
+  // The main routine will then put the final lxn matrix back together.
 
-   cout << "C matrix =" << endl;
-   print_matrix(c,dim_l,dim_n);
-   cout << endl;
-   //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
-        //<< " seconds" << endl;
+  /*
+     stop recording the execution time
+  */
+  //TIMER_STOP;
+
+  cout << "C matrix =" << endl;
+  print_matrix(c, dim_l, dim_n);
+  cout << endl;
+  //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
+       //<< " seconds" << endl;
 
 
-   // KRR 
-   cin.ignore();
+  // KRR 
+  cin.ignore();
 }
 
 
