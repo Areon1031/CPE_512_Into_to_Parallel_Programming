@@ -185,7 +185,7 @@ The number data size is given by the'num_size' parameter its source
 address is given by the '*numbers' parameter, and the destination
 group data associated with the current process is given by the
 '*group' parameter.  */
-void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, int root, int rank, int numtasks, int dim_l, int dim_m, int dim_n, int* start_column)
+void scatter(float* a, float* b, float *group_a, int num_size, int root, int rank, int numtasks, int dim_l, int dim_m, int dim_n, int* start_column)
 {
   MPI_Status status;
   int type = 234;
@@ -209,9 +209,6 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
     // Loop over the MPI tasks
     for (int mpi_task = 0; mpi_task < numtasks; mpi_task++)
     {
-      /*if (mpi_task != root)
-        MPI_Send(&begin_column, 1, MPI_INT, mpi_task, type, MPI_COMM_WORLD);*/
-
       // Calculate the base number of multiplies for each task
       int base = num_mults / numtasks;
 
@@ -265,8 +262,8 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
       curr_col = begin_column;
       count = base;
 
-      cout << "Row assignment" << endl;
-      cout << "Num Rows " << num_rows << endl;
+      //cout << "Row assignment" << endl;
+      //cout << "Num Rows " << num_rows << endl;
 
       // Row assignment
       for (int r = 0; r < num_rows; r++)
@@ -304,7 +301,8 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
       // This could be cleaned up by broadcasting the entire matrix to each process but I feel that this might be faster with larger 
       // matrices as there won't be as much duplication.
 
-      cout << "Column Assignment" << endl;
+      //cout << "Column Assignment" << endl;
+      // TODO: Change this into a modulus operation to get the current column
       for (int i = 0; i < base; i++)
       {
         //cout << "Base " << base << endl;
@@ -312,20 +310,20 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
         //cout << "Column Iteration " << i << endl;
         //cout << "Begin_Column " << begin_column << endl;
         // Fill up the local matrix with values from the B matrix
-        for (int k = 0; k < dim_m; k++)
-        {
-          // TODO: Think about taking this out and jus broadcasting the b matrix because 
-          // for a square matrix of 256 elements the current column implementation here will 
-          // require 8192 iterations and a data array of size 2097152 data items!
-          if (mpi_task == root) // If this is the root then just put data in the buffer
-          {
-            group_b[i*dim_m + k] = b[begin_column + k*dim_n];
-          }
-          else // otherwise, store it and send it at the end
-          {
-            local_b[i*dim_m + k] = b[begin_column + k*dim_n];
-          }
-        }
+        //for (int k = 0; k < dim_m; k++)
+        //{
+        //  // TODO: Think about taking this out and jus broadcasting the b matrix because 
+        //  // for a square matrix of 256 elements the current column implementation here will 
+        //  // require 8192 iterations and a data array of size 2097152 data items!
+        //  if (mpi_task == root) // If this is the root then just put data in the buffer
+        //  {
+        //    group_b[i*dim_m + k] = b[begin_column + k*dim_n];
+        //  }
+        //  else // otherwise, store it and send it at the end
+        //  {
+        //    local_b[i*dim_m + k] = b[begin_column + k*dim_n];
+        //  }
+        //}
 
         //cout << "Updating begin column" << endl;
         // Keep up with the current dim_n column that we processed
@@ -340,7 +338,7 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
       {
         // Send the data to the other processes
         MPI_Send(local_a, num_rows*dim_m, MPI_FLOAT, mpi_task, type, MPI_COMM_WORLD);
-        MPI_Send(local_b, base*dim_m, MPI_FLOAT, mpi_task, type, MPI_COMM_WORLD);
+        //MPI_Send(local_b, base*dim_m, MPI_FLOAT, mpi_task, type, MPI_COMM_WORLD);
       }
     }
   }
@@ -367,7 +365,7 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
     MPI_Recv(start_column, 1, MPI_INT, root, type, MPI_COMM_WORLD, &status);
     MPI_Recv(&num_rows, 1, MPI_INT, root, type, MPI_COMM_WORLD, &status);
     MPI_Recv(group_a, num_rows*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
-    MPI_Recv(group_b, base*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
+    //MPI_Recv(group_b, base*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
   }
 }
 
@@ -405,7 +403,7 @@ void gather(float* c, float* group_c, int num_mults, int root, int rank, int num
       {
         for (int i = 0; i < base; i++)
         {
-          cout << "Group_c Item " << group_c[i] << endl;
+          //cout << "Group_c Item " << group_c[i] << endl;
           // Copy what the root has 
           c[curr_ind] = group_c[i];
           curr_ind++;
@@ -435,7 +433,7 @@ void gather(float* c, float* group_c, int num_mults, int root, int rank, int num
 
         for (int i = 0; i < base; i++)
         {
-          cout << "Group_c Item " << temp[i] << endl;
+          //cout << "Group_c Item " << temp[i] << endl;
           c[curr_ind] = temp[i];
           curr_ind++;
         }
@@ -501,19 +499,25 @@ int main(int argc, char *argv[])
     /*
       output numbers matrix
     */
-    /*cout << "A matrix =" << endl;
+    cout << "A matrix =" << endl;
     print_matrix(a, dim_l, dim_m);
     cout << endl;
-
+    
     cout << "B matrix =" << endl;
     print_matrix(b, dim_m, dim_n);
-    cout << endl;*/
+    cout << endl;
 
 
     // Broadcast the number of multiplies to each process.
     //broadcast_int(&num_mults, 0, 0, numtasks);
     //MPI_Bcast(&num_mults, 1, MPI_INT, 0, MPI_COMM_WORLD);
   }
+  else
+  {
+    b = new (nothrow) float[dim_m*dim_n];
+  }
+
+  MPI_Bcast(b, dim_m*dim_n, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
   // broad cast the data size, which is really the number of multiplies
   if (dim_l == 1)
@@ -547,39 +551,48 @@ int main(int argc, char *argv[])
   //group_b = new (nothrow) float[dim_l * dim_n]; 
   //group_c = new (nothrow) float[dim_l * dim_n];
   group_a = new (nothrow) float[dim_l*dim_m];
-  group_b = new (nothrow) float[dim_m*dim_n];
+  //group_b = new (nothrow) float[dim_m*dim_n];
   group_c = new (nothrow) float[dim_l*dim_n];
+
 
   start_column = 0;
 
-  if (group_a == 0 || group_b == 0 || group_c == 0)
+  if (group_a == 0 || group_c == 0)
   {
     cout << "ERROR:  Insufficient Memory 2" << endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  if (rank == 0)
-    cout << "Made it to the scatter" << endl;
+    //cout << "Made it to the scatter" << endl;
   // Scatter the Data
   // The root process needs to scatter the correct amount of data to each process.
-  scatter(a, b, group_a, group_b, 1, 0, rank, numtasks, dim_l, dim_m, dim_n, &start_column);
-
-  if (rank == 0)
-    cout << "Made it out of the scatter" << endl;
+  //scatter(a, b, group_a, group_b, 1, 0, rank, numtasks, dim_l, dim_m, dim_n, &start_column);
+  cout << "Rank " << rank << " made it to the scatter" << endl;
+  scatter(a, b, group_a, 1, 0, rank, numtasks, dim_l, dim_m, dim_n, &start_column);
+  cout << "Rank " << rank << " made it out of the scatter" << endl;
 
   // Each process will start working on the data here
-  float* sum = new float[base];
   int startIndex = 0;
   int row = 0;
-  int col = 0;
+  int col = start_column;
   for(int i = 0; i < base; i++)
   {
     group_c[i] = 0;
     for (int j = 0; j < dim_m; j++)
     {
-      group_c[i] += group_a[dim_m*row + j] * group_b[dim_m*col + j];
+      //group_c[i] += group_a[dim_m*row + j] * b[dim_m*col + j];
+      group_c[i] += group_a[dim_m*row + j] * b[j*dim_m + col];//b[dim_m*col + j];
+      if (rank == 0)
+      {
+        cout << flush;
+        cout << "Base: " << base << " ";
+        cout << "Group_a " << group_a[dim_m*row + j] << " ";
+        cout << "Group_b " << b[j*dim_m + col] << " ";
+        cout << "Group_c Item: " << group_c[i] << endl;
+      }
+      col++;
     }
-    col++;
+    //col++;
 
     
     // Keep up with the column so we know when to bump the row
@@ -592,17 +605,13 @@ int main(int argc, char *argv[])
     {
       start_column++;
     }
+
+    col = start_column;
   }
-
-  if (rank == 0)
-    cout << "Made it to the gather" << endl;
-
 
   // Gather 
   gather(c, group_c, num_mults, 0, rank, numtasks, dim_l, dim_n);
 
-  if (rank == 0)
-    cout << "Made it out of the gather" << endl;
 
   // Write the gather 
 
@@ -617,8 +626,6 @@ int main(int argc, char *argv[])
   */
   //TIMER_STOP;
 
-  if (rank == 0)
-    cout << "Made it to right before the printing";
   //if (rank == 0)
   //{
   //  cout << "C matrix =" << endl;
@@ -641,7 +648,7 @@ int main(int argc, char *argv[])
   }
   
   delete[] group_a;
-  delete[] group_b;
+  //delete[] group_b;
   delete[] group_c;
 
 
