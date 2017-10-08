@@ -23,16 +23,31 @@ using namespace std;
 //int a[6] = { 1, 2, 3, 4, 5, 6 }; // 3 x 2
 //int b[2] = { 1, 2 }; // 2 x 1
 
-int a[2] = { 1, 2 }; // 1 x 2
-int b[6] = { 1, 2, 3, 4, 5, 6 }; // 2 x 3
+//int a[2] = { 1, 2 }; // 1 x 2
+//int b[6] = { 1, 2, 3, 4, 5, 6 }; // 2 x 3
 
-int dim_l = 1;
-int dim_m = 2;
-int dim_n = 3;
+//int a[4] = { 1, 2, 3, 4 }; // 2 x 2
+//int b[4] = { 1, 2, 3, 4 }; // 2 x 2
+
+
+const int square_dim = 256;
+int a[square_dim*square_dim];
+int b[square_dim*square_dim];
+
+int dim_l = square_dim;
+int dim_m = square_dim;
+int dim_n = square_dim;
 
 
 int main(int argc, char* argv[])
 {
+
+  for (int i = 0; i < square_dim*square_dim; i++)
+  {
+    a[i] = i;
+    b[i] = i;
+  }
+
 	//int num_mults = dim_n*dim_l;
   int num_mults;
 	int numtasks = 3;
@@ -47,8 +62,8 @@ int main(int argc, char* argv[])
 
 	int row_ind = 0;
 	int col_ind = 0;
-	int local_a[200]; // going for maximum size, don't care about space it's cheap
-	int local_b[200];
+	int local_a[square_dim*square_dim]; // going for maximum size, don't care about space it's cheap
+	int local_b[square_dim*square_dim];
 
   // Variables to keep up with what row and column we are reading from
 	int begin_row = 0;

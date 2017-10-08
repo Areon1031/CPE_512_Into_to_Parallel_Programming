@@ -209,8 +209,8 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
     // Loop over the MPI tasks
     for (int mpi_task = 0; mpi_task < numtasks; mpi_task++)
     {
-      if (mpi_task != root)
-        MPI_Send(&begin_column, 1, MPI_INT, mpi_task, type, MPI_COMM_WORLD);
+      /*if (mpi_task != root)
+        MPI_Send(&begin_column, 1, MPI_INT, mpi_task, type, MPI_COMM_WORLD);*/
 
       // Calculate the base number of multiplies for each task
       int base = num_mults / numtasks;
@@ -251,6 +251,12 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
         count -= dim_n;
       }
 
+      if (mpi_task != root)
+      {
+        MPI_Send(&begin_column, 1, MPI_INT, mpi_task, type, MPI_COMM_WORLD);
+        MPI_Send(&num_rows, 1, MPI_INT, mpi_task, type, MPI_COMM_WORLD);
+      }
+
       // Local Buffer variables 
       float* local_a = new float[num_rows*dim_m];
       float* local_b = new float[base*dim_m];
@@ -259,9 +265,14 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
       curr_col = begin_column;
       count = base;
 
+      cout << "Row assignment" << endl;
+      cout << "Num Rows " << num_rows << endl;
+
       // Row assignment
       for (int r = 0; r < num_rows; r++)
       {
+        //cout << "Row Iteration " << r << endl;
+        //cout << "Begin Row " << begin_row << endl;
         // Fill up the local matrix with values from the main A matrix
         for (int t = 0; t < dim_m; t++)
         {
@@ -292,11 +303,20 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
       // This will put the columns in a matrix starting with the last column used for a multiplication
       // This could be cleaned up by broadcasting the entire matrix to each process but I feel that this might be faster with larger 
       // matrices as there won't be as much duplication.
+
+      cout << "Column Assignment" << endl;
       for (int i = 0; i < base; i++)
       {
+        //cout << "Base " << base << endl;
+        //cout << "Num_Mults: " << (num_mults/numtasks) << endl;
+        //cout << "Column Iteration " << i << endl;
+        //cout << "Begin_Column " << begin_column << endl;
         // Fill up the local matrix with values from the B matrix
         for (int k = 0; k < dim_m; k++)
         {
+          // TODO: Think about taking this out and jus broadcasting the b matrix because 
+          // for a square matrix of 256 elements the current column implementation here will 
+          // require 8192 iterations and a data array of size 2097152 data items!
           if (mpi_task == root) // If this is the root then just put data in the buffer
           {
             group_b[i*dim_m + k] = b[begin_column + k*dim_n];
@@ -307,6 +327,7 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
           }
         }
 
+        //cout << "Updating begin column" << endl;
         // Keep up with the current dim_n column that we processed
         if (begin_column != 0 && (begin_column % (dim_n - 1) == 0))
           begin_column = 0;
@@ -339,40 +360,94 @@ void scatter(float* a, float* b, float *group_a, float* group_b, int num_size, i
         base = (num_mults / numtasks) + 1;
     }
 
+    // I must send the number of rows as well
+    int num_rows = 0;
+
     // Receive smaller arrays as well as the starting dim_n column from the root process
     MPI_Recv(start_column, 1, MPI_INT, root, type, MPI_COMM_WORLD, &status);
-    MPI_Recv(group_a, dim_l*dim_n*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
-    MPI_Recv(group_b, dim_l*dim_n*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
+    MPI_Recv(&num_rows, 1, MPI_INT, root, type, MPI_COMM_WORLD, &status);
+    MPI_Recv(group_a, num_rows*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
+    MPI_Recv(group_b, base*dim_m, MPI_FLOAT, root, type, MPI_COMM_WORLD, &status);
   }
 }
-/*
-ALL-TO-ONE Reduce ROUTINE
-Routine to accumulate the result of the local summation associated
-with each MPI process. This routine takes these partial sums and
-produces a global sum on the root MPI process (0)
-Input arguments to routine include variable name of local partial
-sum of each MPI process. The function returns to MPI root process 0,
-the global sum (summation of all partial sums).
-*/
-void reduce(float* sum, float* partial_sum, int root, int rank, int numtasks)
+
+// All to one gather routine
+// Each process will send their calculated sub matrix back to the root process
+void gather(float* c, float* group_c, int num_mults, int root, int rank, int numtasks, int dim_l, int dim_n)
 {
   MPI_Status status;
   int type = 123;
-  // if MPI root process sum up results from the other p-1 processes
-  if (rank == root) {
-    *sum = *partial_sum;
-    for (int mpitask = 0; mpitask < numtasks; mpitask++) {
-      if (mpitask != root) {
-        MPI_Recv(partial_sum, 1, MPI_DOUBLE,
-          mpitask, type, MPI_COMM_WORLD, &status);
-        (*sum) += (*partial_sum);
+ 
+  // This base multiply code is really redundant, I need to find a way
+  // to get this around without having to copy it so many times.
+
+  // Calculate the base number of multiplies for each task
+  int base = num_mults / numtasks;
+
+  // Calculate the extra if it is not an even distribution
+  int extra = num_mults % numtasks;
+
+  // If there are any extra assign them to the first tasks up to rank of extra
+  if (extra != 0)
+  {
+    // If rank is less than the number of extra items, then this process gets an extra multiply to process
+    if (rank < extra)
+      base = (num_mults / numtasks) + 1;
+  }
+
+  if (rank == root)
+  {
+    int curr_ind = 0;
+    // Piece back together the matrix
+    for (int mpi_task = 0; mpi_task < numtasks; mpi_task++)
+    {
+      if (mpi_task == root)
+      {
+        for (int i = 0; i < base; i++)
+        {
+          cout << "Group_c Item " << group_c[i] << endl;
+          // Copy what the root has 
+          c[curr_ind] = group_c[i];
+          curr_ind++;
+        }
+      }
+      else
+      {
+        // Receive from the processes
+
+        // Calculate the base number of multiplies for each task
+        int base = num_mults / numtasks;
+
+        // Calculate the extra if it is not an even distribution
+        int extra = num_mults % numtasks;
+
+        // If there are any extra assign them to the first tasks up to rank of extra
+        if (extra != 0)
+        {
+          // If rank is less than the number of extra items, then this process gets an extra multiply to process
+          if (mpi_task < extra)
+            base = (num_mults / numtasks) + 1;
+        }
+
+        float* temp = new float[base];
+
+        MPI_Recv(temp, base, MPI_FLOAT, mpi_task, type, MPI_COMM_WORLD, &status);
+
+        for (int i = 0; i < base; i++)
+        {
+          cout << "Group_c Item " << temp[i] << endl;
+          c[curr_ind] = temp[i];
+          curr_ind++;
+        }
+
+        delete[] temp;
       }
     }
   }
-  // if not root MPI root process then send partial sum to the root  
-  else {
-    MPI_Send(partial_sum, 1, MPI_DOUBLE,
-      root, type, MPI_COMM_WORLD);
+  else
+  {
+    // Send the matrix to the root
+    MPI_Send(group_c, base, MPI_FLOAT, root, type, MPI_COMM_WORLD);
   }
 }
 
@@ -415,7 +490,6 @@ int main(int argc, char *argv[])
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    start_column = 0;
 
     /*
        initialize numbers matrix with random data
@@ -427,13 +501,13 @@ int main(int argc, char *argv[])
     /*
       output numbers matrix
     */
-    cout << "A matrix =" << endl;
+    /*cout << "A matrix =" << endl;
     print_matrix(a, dim_l, dim_m);
     cout << endl;
 
     cout << "B matrix =" << endl;
     print_matrix(b, dim_m, dim_n);
-    cout << endl;
+    cout << endl;*/
 
 
     // Broadcast the number of multiplies to each process.
@@ -472,9 +546,9 @@ int main(int argc, char *argv[])
   //group_a = new (nothrow) float[dim_l * dim_n];//float[dim_l * dim_n]; // don't care about the size right now, memory is cheaper than run time
   //group_b = new (nothrow) float[dim_l * dim_n]; 
   //group_c = new (nothrow) float[dim_l * dim_n];
-  group_a = new (nothrow) float[200];
-  group_b = new (nothrow) float[200];
-  group_c = new (nothrow) float[200];
+  group_a = new (nothrow) float[dim_l*dim_m];
+  group_b = new (nothrow) float[dim_m*dim_n];
+  group_c = new (nothrow) float[dim_l*dim_n];
 
   start_column = 0;
 
@@ -484,14 +558,14 @@ int main(int argc, char *argv[])
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
+  if (rank == 0)
+    cout << "Made it to the scatter" << endl;
   // Scatter the Data
   // The root process needs to scatter the correct amount of data to each process.
   scatter(a, b, group_a, group_b, 1, 0, rank, numtasks, dim_l, dim_m, dim_n, &start_column);
+
   if (rank == 0)
-  {
-    cout << "Group_b " << group_b[0] << " " << group_b[1] << " " << group_b[2] << " " << group_b[3] << " " << group_b[4] << " " << group_b[5] << endl << endl;
-    cout << "Group_b " << GB(0,0) << " " << GB(0, 1) << " " << GB(0, 2) << " " << GB(1, 0) << " " << GB(1, 1) << " " << GB(1, 2) << endl << endl;
-  }
+    cout << "Made it out of the scatter" << endl;
 
   // Each process will start working on the data here
   float* sum = new float[base];
@@ -500,19 +574,13 @@ int main(int argc, char *argv[])
   int col = 0;
   for(int i = 0; i < base; i++)
   {
-    sum[i] = 0;
+    group_c[i] = 0;
     for (int j = 0; j < dim_m; j++)
     {
-      if (rank == 0)
-      {
-        cout << "Group_a item: " << group_a[dim_m*row + j] << endl;
-        cout << "Group_b item: " << group_b[dim_m*col + j] << endl;
-      }
-      sum[i] += group_a[dim_m*row + j] * group_b[dim_m*col + j];
-      //sum[i] += GA(row, j) * GB(i, j);
-
+      group_c[i] += group_a[dim_m*row + j] * group_b[dim_m*col + j];
     }
     col++;
+
     
     // Keep up with the column so we know when to bump the row
     if (start_column != 0 && (start_column % (dim_n - 1) == 0))
@@ -524,19 +592,17 @@ int main(int argc, char *argv[])
     {
       start_column++;
     }
-    //cout << "Iteration " << col << endl;
-
   }
 
-  if (rank == 2)
-  {
-    cout << "Rank 0: Sum matrix" << endl;
-    for (int i = 0; i < (num_mults / numtasks) + 1; i++)
-    {
-      cout << sum[i] << " ";
-    }
-    cout << endl;
-  }
+  if (rank == 0)
+    cout << "Made it to the gather" << endl;
+
+
+  // Gather 
+  gather(c, group_c, num_mults, 0, rank, numtasks, dim_l, dim_n);
+
+  if (rank == 0)
+    cout << "Made it out of the gather" << endl;
 
   // Write the gather 
 
@@ -546,29 +612,13 @@ int main(int argc, char *argv[])
   /*TIMER_CLEAR;
   TIMER_START;*/
 
-  //if (rank == 0)
-  //{
-  //  // multiply local part of matrix
-  //  for (i = 0; i < dim_l; i++) {
-  //    for (j = 0; j < dim_n; j++) {
-  //      dot_prod = 0.0;
-  //      // Need to use this loop to send the arrays to both for the dot product
-  //      for (k = 0; k < dim_m; k++) {
-  //        dot_prod += A(i, k)*B(k, j);
-  //      }
-  //      C(i, j) = dot_prod;
-  //    }
-  //  }
-  //}
-
-  // Gather, each process will send the results of the dot product back to the main routine
-  // The main routine will then put the final lxn matrix back together.
-
   /*
      stop recording the execution time
   */
   //TIMER_STOP;
 
+  if (rank == 0)
+    cout << "Made it to right before the printing";
   //if (rank == 0)
   //{
   //  cout << "C matrix =" << endl;
@@ -578,6 +628,9 @@ int main(int argc, char *argv[])
   //  //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
   //       //<< " seconds" << endl;
   //}
+
+  if (rank == 0)
+    cout << "Made it to the cleanup" << endl;
 
   // Clear out memory
   if (rank == 0)

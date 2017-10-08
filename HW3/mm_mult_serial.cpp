@@ -42,18 +42,23 @@ using namespace std;
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
+//#include <sys/time.h>
+#include <time.h>
 
 #define MX_SZ 320
 #define SEED 2397           /* random number seed */
 #define MAX_VALUE  100.0    /* maximum size of array elements A, and B */
+
+// Defines so that I can compile the code in visual studio
+#define srand48(s) srand(s)
+#define drand48() (((double)rand())/((double)RAND_MAX))
 
 /* copied from mpbench */
 #define TIMER_CLEAR     (tv1.tv_sec = tv1.tv_usec = tv2.tv_sec = tv2.tv_usec = 0)
 #define TIMER_START     gettimeofday(&tv1, (struct timezone*)0)
 #define TIMER_ELAPSED   ((tv2.tv_usec-tv1.tv_usec)+((tv2.tv_sec-tv1.tv_sec)*1000000))
 #define TIMER_STOP      gettimeofday(&tv2, (struct timezone*)0)
-struct timeval tv1,tv2;
+//struct timeval tv1,tv2;
 
 /*
 This declaration facilitates the creation of a two dimensional 
@@ -163,19 +168,19 @@ int main( int argc, char *argv[])
    /*
      output numbers matrix
    */
-   cout << "A matrix =" << endl;
+   /*cout << "A matrix =" << endl;
    print_matrix(a,dim_l,dim_m);
    cout << endl;
 
    cout << "B matrix =" << endl;
    print_matrix(b,dim_m,dim_n);
-   cout << endl;
+   cout << endl;*/
 
    /*
    Start recording the execution time
    */
-   TIMER_CLEAR;
-   TIMER_START;
+   //TIMER_CLEAR;
+   //TIMER_START;
 
    // multiply local part of matrix
    for (i=0;i<dim_l;i++) {
@@ -191,13 +196,15 @@ int main( int argc, char *argv[])
    /*
       stop recording the execution time
    */ 
-   TIMER_STOP;
+   //TIMER_STOP;
 
    cout << "C matrix =" << endl;
    print_matrix(c,dim_l,dim_n);
    cout << endl;
-   cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
-        << " seconds" << endl;
+   //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
+   //     << " seconds" << endl;
+
+   cin.ignore();
 
 }
 
