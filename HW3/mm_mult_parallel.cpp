@@ -499,13 +499,13 @@ int main(int argc, char *argv[])
     /*
       output numbers matrix
     */
-    cout << "A matrix =" << endl;
+    /*cout << "A matrix =" << endl;
     print_matrix(a, dim_l, dim_m);
     cout << endl;
     
     cout << "B matrix =" << endl;
     print_matrix(b, dim_m, dim_n);
-    cout << endl;
+    cout << endl;*/
 
 
     // Broadcast the number of multiplies to each process.
@@ -582,17 +582,16 @@ int main(int argc, char *argv[])
     {
       //group_c[i] += group_a[dim_m*row + j] * b[dim_m*col + j];
       group_c[i] += group_a[dim_m*row + j] * b[j*dim_m + col];//b[dim_m*col + j];
-      if (rank == 0)
+      /*if (rank == 0)
       {
         cout << flush;
         cout << "Base: " << base << " ";
         cout << "Group_a " << group_a[dim_m*row + j] << " ";
         cout << "Group_b " << b[j*dim_m + col] << " ";
         cout << "Group_c Item: " << group_c[i] << endl;
-      }
-      col++;
+      }*/
     }
-    //col++;
+    col++;
 
     
     // Keep up with the column so we know when to bump the row
@@ -626,15 +625,15 @@ int main(int argc, char *argv[])
   */
   //TIMER_STOP;
 
-  //if (rank == 0)
-  //{
-  //  cout << "C matrix =" << endl;
-  //  print_matrix(c, dim_l, dim_n);
-  //  cout << endl;
+  if (rank == 0)
+  {
+    cout << "C matrix =" << endl;
+    print_matrix(c, dim_l, dim_n);
+    cout << endl;
 
-  //  //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
-  //       //<< " seconds" << endl;
-  //}
+    //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
+         //<< " seconds" << endl;
+  }
 
   if (rank == 0)
     cout << "Made it to the cleanup" << endl;
