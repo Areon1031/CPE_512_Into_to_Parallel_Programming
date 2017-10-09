@@ -234,7 +234,6 @@ void scatter(float* a, float* b, float *group_a, int root, int rank, int numtask
 
       // Local Buffer variables 
       float* local_a = new float[num_rows*dim_m];
-      float* local_b = new float[base*dim_m];
 
       // Reset our column check and multiply count
       curr_col = begin_column;
@@ -293,6 +292,8 @@ void scatter(float* a, float* b, float *group_a, int root, int rank, int numtask
       {
         MPI_Send(local_a, num_rows*dim_m, MPI_FLOAT, mpi_task, type, MPI_COMM_WORLD);
       }
+
+      delete[] local_a;
     }
   }
   else
