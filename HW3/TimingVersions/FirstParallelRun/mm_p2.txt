@@ -1,0 +1,14 @@
+time=0.06944 seconds
+time=0.507202 seconds
+time=2.230154 seconds
+time=13.403692 seconds
+time=23.349827 seconds
+time=54.005193 seconds
+time=94.239961 seconds
+time=189.11531 seconds
+time=242.80708 seconds
+time=342.61383 seconds
+time=468.86301 seconds
+time=606.32471 seconds
+time=733.08076 seconds
+time=1155.3639 seconds

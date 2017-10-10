@@ -268,24 +268,13 @@ void scatter(float* a, float* b, float *group_a, int root, int rank, int numtask
         }
       }
 
-      // Column Assignment (Refactor this logic, there is no need for a loop)
+      // Column Assignment 
       // This logic will keep up with what column each process should start performing calculations
       // Base is the updated base number of multiplies each process must perform
-      count = base;
-      while (count > 0)
-      {
-        // if the number of multiplies is less than the current dimension of n
-        // Update the begin_column with what is left
-        if (count - dim_n <= 0)
-          begin_column += count;
-
-        // If the begin column has run over the current limit
-        // then account for wrap around
-        if (begin_column >= (dim_n-1))
-          begin_column = begin_column % dim_n;
-
-        count -= dim_n;
-      }
+      int temp_column = base % dim_n; // Get the leftover after applying number of multiplies
+      begin_column += temp_column; // Update the current column index
+      if (begin_column >= dim_n) // Account for wrapping around dim_n
+        begin_column = begin_column % dim_n;
       
       // Send the data to the other processes
       if (mpi_task != root)
@@ -415,13 +404,13 @@ int main(int argc, char *argv[])
     /*
       output numbers matrix
     */
-    /*cout << "A matrix =" << endl;
+    cout << "A matrix =" << endl;
     print_matrix(a, dim_l, dim_m);
     cout << endl;
     
     cout << "B matrix =" << endl;
     print_matrix(b, dim_m, dim_n);
-    cout << endl;*/
+    cout << endl;
   }
   else
   {
@@ -466,7 +455,7 @@ int main(int argc, char *argv[])
     group_c[i] = 0;
     for (int j = 0; j < dim_m; j++)
     {
-      group_c[i] += group_a[dim_m*row + j] * b[j*dim_m + col];
+      group_c[i] += group_a[dim_m*row + j] * b[j*dim_n + col];
     }
     col++;
 
@@ -500,9 +489,9 @@ int main(int argc, char *argv[])
 
   if (rank == 0)
   {
-    /*cout << "C matrix =" << endl;
+    cout << "C matrix =" << endl;
     print_matrix(c, dim_l, dim_n);
-    cout << endl;*/
+    cout << endl;
 
     //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
          //<< " seconds" << endl;
