@@ -516,5 +516,3 @@ int main(int argc, char *argv[])
   // clear out all buffers, remove handlers, etc.
   MPI_Finalize();
 }
-
-
