@@ -367,6 +367,7 @@ int main(int argc, char *argv[])
   int num_mults, group_size, num_group;
   int numtasks, rank, num;
   int start_column;
+  double start, finish;
   MPI_Status status;
 
   // Main Routine
@@ -417,6 +418,9 @@ int main(int argc, char *argv[])
     b = new (nothrow) float[dim_m*dim_n];
   }
 
+  if (rank == 0)
+    start = MPI_Wtime();
+
   MPI_Bcast(b, dim_m*dim_n, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
   // broad cast the data size, which is really the number of multiplies
@@ -457,7 +461,6 @@ int main(int argc, char *argv[])
     {
       group_c[i] += group_a[dim_m*row + j] * b[j*dim_n + col];
     }
-    col++;
 
     // Keep up with the column so we know when to bump the row
     if (start_column != 0 && (start_column % (dim_n - 1) == 0))
@@ -489,10 +492,13 @@ int main(int argc, char *argv[])
 
   if (rank == 0)
   {
+    finish = MPI_Wtime();
     cout << "C matrix =" << endl;
     print_matrix(c, dim_l, dim_n);
     cout << endl;
 
+
+    cout << "time = " << setprecision(8) << (finish - start) << " seconds " << endl;
     //cout << "time=" << setprecision(8) <<  TIMER_ELAPSED/1000000.0 
          //<< " seconds" << endl;
   }
