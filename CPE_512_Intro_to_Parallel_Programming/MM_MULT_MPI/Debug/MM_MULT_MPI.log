@@ -1,12 +1,11 @@
-﻿  mm_mult_parallel.cpp
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(128): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(371): warning C4101: 'status': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(365): warning C4101: 'k': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(363): warning C4101: 'dot_prod': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(367): warning C4101: 'group_size': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(367): warning C4101: 'num_group': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(365): warning C4101: 'j': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(365): warning C4101: 'i': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel.cpp(368): warning C4101: 'num': unreferenced local variable
-  MM_MULT_MPI.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\MM_MULT_MPI.exe
-  MM_MULT_MPI.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\MM_MULT_MPI.pdb (Partial PDB)
+﻿  mm_mult_parallel_openmp.cpp
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(128): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(372): warning C4101: 'status': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(365): warning C4101: 'k': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(363): warning C4101: 'dot_prod': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(367): warning C4101: 'group_size': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(367): warning C4101: 'num_group': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(365): warning C4101: 'j': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(365): warning C4101: 'i': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(368): warning C4101: 'num': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw3\mm_mult_parallel_openmp.cpp(465): error C4700: uninitialized local variable 'thread_count' used

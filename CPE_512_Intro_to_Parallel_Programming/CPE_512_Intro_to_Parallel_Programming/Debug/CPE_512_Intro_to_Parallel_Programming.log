@@ -1,6 +1,14 @@
-﻿  add_num_MPI_rev1.cpp
-e:\uah\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev1.cpp(300): warning C4101: 'status': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev1.cpp(298): warning C4101: 'group_size': unreferenced local variable
-e:\uah\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev1.cpp(299): warning C4101: 'num': unreferenced local variable
-  CPE_512_Intro_to_Parallel_Programming.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\ADD_NUM_MPI.exe
-  CPE_512_Intro_to_Parallel_Programming.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\ADD_NUM_MPI.pdb (Partial PDB)
+﻿  add_num_MPI_rev3.cpp
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev3.cpp(153): error C3861: 'srand48': identifier not found
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev3.cpp(155): error C3861: 'drand48': identifier not found
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev3.cpp(190): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev3.cpp(348): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  add_num_MPI_rev2.cpp
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev2.cpp(152): error C3861: 'srand48': identifier not found
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev2.cpp(154): error C3861: 'drand48': identifier not found
+  add_num_MPI_rev1.cpp
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev1.cpp(305): warning C4101: 'status': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev1.cpp(303): warning C4101: 'group_size': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev1.cpp(304): warning C4101: 'num': unreferenced local variable
+  Generating Code...
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\hw2\add_num_mpi_rev1.cpp(350): error C4703: potentially uninitialized local pointer variable 'numbers' used
