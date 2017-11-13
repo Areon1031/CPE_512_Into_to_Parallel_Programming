@@ -1,0 +1,11 @@
+﻿  mm_mult_parallel_openmp.cpp
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(133): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(377): warning C4101: 'status': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(370): warning C4101: 'k': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(368): warning C4101: 'dot_prod': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(372): warning C4101: 'group_size': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(372): warning C4101: 'num_group': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(370): warning C4101: 'j': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(370): warning C4101: 'i': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem3\mm_mult_parallel_openmp.cpp(373): warning C4101: 'num': unreferenced local variable
+  Exam2.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\x64\Debug\EXAM2.exe
