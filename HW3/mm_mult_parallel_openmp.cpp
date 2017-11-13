@@ -83,30 +83,32 @@ float *group_a, *group_c;
    Routine to retrieve the data size of the numbers array from the
    command line or by prompting the user for the information
 */
-void get_index_size(int argc, char *argv[], int *dim_l, int *dim_m, int *dim_n, int rank) {
-  if (argc != 2 && argc != 4) {
+void get_index_size(int argc, char *argv[], int *dim_l, int *dim_m, int *dim_n, int* thread_count, int rank) {
+  if (argc != 3 && argc != 5) {
     if (rank == 0)
     {
-      cout << "usage:  mm_mult_serial [l_dimension] <m_dimension n_dimmension>"
+      cout << "usage:  mm_mult_serial num_threads [l_dimension] <m_dimension n_dimmension>"
         << endl;
       MPI_Finalize();
       exit(1);
     }
   }
   else {
-    if (argc == 2) {
-      *dim_l = *dim_n = *dim_m = atoi(argv[1]);
+    if (argc == 3) {
+	  *thread_count = atoi(argv[1]);
+      *dim_l = *dim_n = *dim_m = atoi(argv[2]);
     }
     else {
-      *dim_l = atoi(argv[1]);
-      *dim_m = atoi(argv[2]);
-      *dim_n = atoi(argv[3]);
+	  *thread_count = atoi(argv[1]);
+      *dim_l = atoi(argv[2]);
+      *dim_m = atoi(argv[3]);
+      *dim_n = atoi(argv[4]);
     }
   }
   if (rank == 0)
   {
-    if (*dim_l <= 0 || *dim_n <= 0 || *dim_m <= 0) {
-      cout << "Error: number of rows and/or columns must be greater than 0"
+    if (*dim_l <= 0 || *dim_n <= 0 || *dim_m <= 0 || *thread_count < 1) {
+      cout << "Error: number of rows and/or columns must be greater than 0 and the thread count must be greater than or equal to 1"
         << endl;
       MPI_Finalize();
       exit(1);
@@ -379,7 +381,7 @@ int main(int argc, char *argv[])
 
 
   // get matrix sizes
-  get_index_size(argc, argv, &dim_l, &dim_m, &dim_n, rank);
+  get_index_size(argc, argv, &dim_l, &dim_m, &dim_n, &thread_count, rank);
 
   // The root process fills the matrices and then passes them to the othe processes
   if (rank == 0)
@@ -458,11 +460,12 @@ int main(int argc, char *argv[])
 
   // Split this loop with openmp
   // Exam 2 Edit
+#pragma omp parallel for num_threads(thread_count) schedule(static, base)
   for(int i = 0; i < base; i++)
   {
     group_c[i] = 0;
 	float sum = 0;
-#pragma omp parallel for num_threads(thread_count) //reduction(+: sum)
+#pragma omp parallel for num_threads(thread_count) schedule(static, 1)
     for (int j = 0; j < dim_m; j++)
     {
 	  sum += group_a[dim_m*row + j] * b[j*dim_n + col];
