@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Problem1.cpp">
+    <ClCompile Include="..\..\Exam2\Problem2\tsp_parallel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

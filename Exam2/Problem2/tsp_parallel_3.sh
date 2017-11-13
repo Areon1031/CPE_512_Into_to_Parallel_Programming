@@ -1,0 +1,11 @@
+srun ./tsp_parallel 3 3 >>tsp_parallel_3.txt
+srun ./tsp_parallel 3 4 >>tsp_parallel_3.txt
+srun ./tsp_parallel 3 5 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 6 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 7 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 8 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 9 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 10 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 11 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 12 >>tsp_parallel_3.txt 
+srun ./tsp_parallel 3 13 >>tsp_parallel_3.txt 

@@ -1,2 +1,10 @@
-﻿  Problem1.cpp
-  Exam2.vcxproj -> C:\Users\krray\OneDrive\Documents\GitHub\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\EXAM2.exe
+﻿  tsp_parallel.cpp
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(99): warning C4018: '<': signed/unsigned mismatch
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(124): warning C4018: '<': signed/unsigned mismatch
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(141): warning C4018: '<': signed/unsigned mismatch
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(177): warning C4018: '<': signed/unsigned mismatch
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(185): warning C4018: '<': signed/unsigned mismatch
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(211): warning C4018: '<': signed/unsigned mismatch
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(219): warning C4018: '<': signed/unsigned mismatch
+e:\uah\cpe_512_into_to_parallel_programming\exam2\problem2\tsp_parallel.cpp(258): warning C4715: 'get_city_number': not all control paths return a value
+  Exam2.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\CPE_512_Intro_to_Parallel_Programming\Debug\EXAM2.exe
