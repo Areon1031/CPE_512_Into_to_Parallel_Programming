@@ -1,0 +1,2 @@
+time = 736.24347 seconds 
+Made it to the cleanup

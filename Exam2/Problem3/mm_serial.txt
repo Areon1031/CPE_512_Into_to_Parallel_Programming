@@ -1,0 +1,1 @@
+time=5184.7855 seconds
