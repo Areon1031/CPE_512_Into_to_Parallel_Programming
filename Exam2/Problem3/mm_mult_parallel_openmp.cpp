@@ -34,6 +34,23 @@
 
    To execute:
    mm_mult_serial [l_parameter] <m_parameter n_parameter>
+   
+   Edits:
+   Kyle Ray
+   Exam 2
+   CPE 512
+   
+   Added MPI process parallelism to distribute the problem evenly
+   to multiple heavy weight processes, number of processes is given
+   at run time by the user.  Also, added OpenMP parallel statements
+   to divide the work of each process among a number of threads, number
+   of threads available is specified by the user at runtime
+   
+   Compie:
+   mpic++ -o mm_mult_hybrid mm_mult_hybrid.cpp -fopenmp
+   
+   Execute:
+   mpiexec -np [num_MPI_processes] mm_mult_hybrid [num_threads_per_process] [l_parameter] <m_parameter n_parameter>    
 */
 
 using namespace std;
@@ -61,8 +78,8 @@ using namespace std;
 //struct timeval tv1,tv2;
 
 // Defines so that I can compile the code in visual studio
-#define srand48(s) srand(s)
-#define drand48() (((double)rand())/((double)RAND_MAX))
+//#define srand48(s) srand(s)
+//#define drand48() (((double)rand())/((double)RAND_MAX))
 
 
 /*
@@ -463,7 +480,7 @@ int main(int argc, char *argv[])
 
   // Split this loop with openmp
   // Exam 2 Edit
-  #pragma omp parallel for num_threads(thread_count) schedule(static, 1)
+  #pragma omp parallel for num_threads(thread_count) schedule(dynamic)
   for (int i = 0; i < base; i++)
   {
     // Exam 2 Edit
@@ -504,44 +521,6 @@ int main(int argc, char *argv[])
 
     group_c[i] = sum;
   }
-
-
-
-  //// Split this loop with openmp
-  //// Exam 2 Edit
-  //#pragma omp parallel for num_threads(thread_count) schedule(static, 1)
-  //for(int i = 0; i < base; i++)
-  //{
-  //  group_c[i] = 0;
-	 // float sum = 0;
-
-  //  // Exam 2 Edit
-  //  // This may not be helpful, maybe harmful depending on overhead
-  //  #pragma omp parallel for num_threads(thread_count) schedule(static, 1)
-  //  for (int j = 0; j < dim_m; j++)
-  //  {
-	 //   sum += group_a[dim_m*row + j] * b[j*dim_n + col];
-  //  }
-
-	 // group_c[i] = sum;
-
-  //  // Exam 2 Edit
-  //  #pragma omp critical
-  //  {
-  //    // Keep up with the column so we know when to bump the row
-  //    if (start_column != 0 && (start_column % (dim_n - 1) == 0))
-  //    {
-  //      start_column = 0;
-  //      row++;
-  //    }
-  //    else if ((start_column + 1) != dim_n) // can't exceed the dim_n for current column
-  //    {
-  //      start_column++;
-  //    }
-
-  //    col = start_column;
-  //  }
-  //}
 
   // Gather 
   gather(c, group_c, num_mults, 0, rank, numtasks, dim_l, dim_n);

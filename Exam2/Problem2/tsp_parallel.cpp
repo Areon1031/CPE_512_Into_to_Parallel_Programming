@@ -15,7 +15,7 @@
 // Kyle Ray
 // Exam 2 
 // CPE 512
-// November 16, 2017
+// November 20, 2017
 // Note: (Exam 2 Edit) comment placed before each change to make it easier to find.
 //
 // Experimented with parallelizing the computational for loops.  When applying this to some
@@ -27,8 +27,8 @@ using namespace std;
 #include <iostream>
 #include <iomanip>
 #include <stdlib.h>
-//#include <sys/time.h>
-#include <time.h>
+#include <sys/time.h>
+//#include <time.h>
 
 // Exam 2 Edit
 // Include the OpenMP library for function calls
@@ -54,8 +54,8 @@ unsigned int num_threads;
 #define MAX_INT 0x7fffffff // maximum integer possible
 
 // Defines so that I can compile the code in visual studio
-#define srand48(s) srand(s)
-#define drand48() (((double)rand())/((double)RAND_MAX))
+//#define srand48(s) srand(s)
+//#define drand48() (((double)rand())/((double)RAND_MAX))
 
 // generate randomly a cost matrix that represents the cost of travel
 // between each two cities. This generates a nonsymetric cost matrix
@@ -300,8 +300,8 @@ int main(int argc, char *argv[]) {
 
    cout << "tour cost = "  << 
       tour_cost(num_cities,best_order,city_cost_matrix)
-      << endl;
-  // cout << num_cities << "  " <<  TIMER_ELAPSED/1000000.0 << endl;
+     << endl;
+   //cout << num_cities << "  " <<  TIMER_ELAPSED/1000000.0 << endl;
 
    // Exam 2 Edit
 #ifdef _OPENMP
