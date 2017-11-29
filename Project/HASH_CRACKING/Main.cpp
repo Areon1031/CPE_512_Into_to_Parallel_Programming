@@ -1,19 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <mpi.h>
+#include <fstream>
+using namespace std;
+
+// Hashing Function Include
 #include "md5.h"
 #include "sha1.h"
 #include "sha256.h"
-#include <iostream>
-#include <vector>
-using namespace std;
+
+bool readDictionary(string filename);
 
 int main(int argc, char* argv[])
 {
-  cout << "MD5    of " << argv[1] << " is: " << md5(argv[1]) << endl;
-  cout << "SHA1   of " << argv[1] << " is: " << sha1(argv[1]) << endl;
-  cout << "SHA256 of " << argv[1] << " is: " << sha256(argv[1]) << endl;
+  // Variables
+  int numtasks, rank, num;
+  MPI_Status status;
 
-  std::vector<char> test;
+  // Start up the MPI Processes
+  MPI_Init(&argc, &argv); // initialize MPI environment
+  MPI_Comm_size(MPI_COMM_WORLD, &numtasks); // get total number of MPI processes
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get unique task id number
 
+  // Master needs to read in and parse the dictionary file
+  // Should then send the size that each process should allocate to hold their part
+  // Scatter the dictionary to other tasks.
 
-  cin.ignore();
   return 0;
+}
+
+bool readDictionary(string filename)
+{
+  std::vector<string> passwords;
+  fstream dictFile(filename.c_str());
+
+  if(dictFile.fail())
+    return false;
+
+  while (!dictFile.eof())
+  {
+    // Read and store each password
+
+  }
+
 }
