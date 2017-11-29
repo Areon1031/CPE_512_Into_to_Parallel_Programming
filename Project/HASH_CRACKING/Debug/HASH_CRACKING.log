@@ -1,2 +1,13 @@
 ﻿  Main.cpp
-  HASH_CRACKING.vcxproj -> C:\Users\krray\OneDrive\Documents\GitHub\CPE_512_Into_to_Parallel_Programming\Project\Debug\HASH_CRACKING.exe
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\main.cpp(58): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\main.cpp(20): warning C4101: 'status': unreferenced local variable
+c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\main.cpp(19): warning C4101: 'num': unreferenced local variable
+Main.obj : error LNK2019: unresolved external symbol _MPI_Bcast@20 referenced in function _main
+Main.obj : error LNK2019: unresolved external symbol _MPI_Scatter@32 referenced in function _main
+Main.obj : error LNK2019: unresolved external symbol _MPI_Comm_size@8 referenced in function _main
+Main.obj : error LNK2019: unresolved external symbol _MPI_Comm_rank@8 referenced in function _main
+Main.obj : error LNK2019: unresolved external symbol _MPI_Init@8 referenced in function _main
+Main.obj : error LNK2019: unresolved external symbol _MPI_Finalize@0 referenced in function _main
+Main.obj : error LNK2019: unresolved external symbol _MPI_Abort@8 referenced in function _main
+C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x64\\msmpi.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\krray\OneDrive\Documents\GitHub\CPE_512_Into_to_Parallel_Programming\Project\Debug\HASH_CRACKING.exe : fatal error LNK1120: 7 unresolved externals
