@@ -22,7 +22,7 @@
     <ClCompile Include="..\zedwood\MD5\md5.cpp" />
     <ClCompile Include="..\zedwood\SHA1\sha1.cpp" />
     <ClCompile Include="..\zedwood\SHA256\sha256.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="OpenMP_Password_Crack.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -96,6 +96,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(MSMPI_INC);$(MSMPI_INC)\x64;$(SolutionDir)zedwood\MD5\;$(SolutionDir)zedwood\SHA1\;$(SolutionDir)zedwood\SHA256\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(MSMPI_LIB64)</AdditionalLibraryDirectories>

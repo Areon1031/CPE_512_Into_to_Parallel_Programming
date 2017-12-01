@@ -27,7 +27,7 @@
     <ClCompile Include="..\zedwood\SHA256\sha256.cpp">
       <Filter>Source Files\HashingFunctions</Filter>
     </ClCompile>
-    <ClCompile Include="Main.cpp">
+    <ClCompile Include="OpenMP_Password_Crack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
