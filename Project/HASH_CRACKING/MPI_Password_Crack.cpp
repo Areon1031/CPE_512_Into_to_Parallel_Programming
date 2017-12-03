@@ -124,12 +124,17 @@ int main(int argc, char* argv[])
   // Scatter the passwords to the processes
   scatter(passwords, local_passwords, total_num_passes , 0, rank, numtasks);
 
-  if (rank == 1)
+  /*if (rank == 1)
   {
     cout << "process " << rank << " password list size " << local_passwords.size() << endl;
-  }
+  }*/
+
+  // Flag for a process to report when done, allows other processes to know when to stop
+  bool someone_done;
+
 
   // Check each local pass hash and if we find the password then quit and let all the other processes know
+  cout << "Process " << rank << " list size = " << local_passwords.size() << endl;
   for (int i = 0; i < local_passwords.size(); i++)
   {
     std::string check_pass;
@@ -155,35 +160,29 @@ int main(int argc, char* argv[])
         << "Hash is " << check_pass << endl;
     }
 
-    cout << "Process " << rank << " made it up to the all to all " << endl;
-    // Every process needs to hit this, I need to make sure that this doesn't block everyone because that would be inefficient
-    bool someone_done = pass_found;
+    // Let other processes know if the password is found or not
+    // TODO: Could probably use non blocking send and receives to do this somehow, just to make it more efficient.
+    // Although, all of the loops should be somewhere around the same time complexity, so it might not matter too much.
+    MPI_Status status;
+    for (int mpitask = 0; mpitask < numtasks; mpitask++)
+    {
+      if (mpitask != rank)
+      {
+        MPI_Send(&pass_found, 1, MPI_C_BOOL, mpitask, rank, MPI_COMM_WORLD);
+        MPI_Recv(&someone_done, 1, MPI_C_BOOL, mpitask, mpitask, MPI_COMM_WORLD, &status);
 
-    // TODO: Need to find a way to let the other processes know that the password has been found
-    //MPI_Alltoall(&pass_found, 1, MPI_C_BOOL, &someone_done, 1, MPI_C_BOOL, MPI_COMM_WORLD);
+        if (someone_done)
+          pass_found = true;
+      }
+    }
 
-    // If a process has finished, then we need to break out of the loop because we don't need to process
-    // the rest of the dictionary
-    if (someone_done)
+    if (pass_found)
       break;
   }
 
   cout << "Process " << rank << " is finished " << endl;
 
-
-  /*if (rank == 0)
-  {
-    for (int i = 0; i < local_passwords.size(); i++)
-    {
-      cout << "Local Password " << i << " : " << local_passwords[i] << endl;
-    }
-    cout << "Num Passes: " << local_passwords.size() << endl;
-    cout << "Actual Pass: " << actual_pass << endl;
-  }*/
-
   MPI_Barrier(MPI_COMM_WORLD);
-
-
   // TODO: Make sure that I can get the timing right, should stop the clock when the process reports
   // that it has found the password.
   // This means that I need to take the wall time of the process that finds the password.
@@ -240,7 +239,7 @@ void scatter(std::vector<string>& passwords, std::vector<string>& local_password
     int extra = num_passes % numtasks;
 
     int begin_element = 0;
-    cout << "List size " << passwords.size() << endl;
+    //cout << "List size " << passwords.size() << endl;
 
     for (int mpitask = 0; mpitask < numtasks; mpitask++)
     {
@@ -249,7 +248,7 @@ void scatter(std::vector<string>& passwords, std::vector<string>& local_password
       {
         for (int i = 0; i < num_passes_by_rank; i++)
         {
-          cout << "Begin element: " << begin_element << endl;
+          //cout << "Begin element: " << begin_element << endl;
           local_passwords.push_back(passwords[begin_element]);
           ++begin_element;
         }
@@ -258,7 +257,7 @@ void scatter(std::vector<string>& passwords, std::vector<string>& local_password
       {
         for (int i = 0; i < num_passes_by_rank; i++)
         {
-          cout << "Begin element: " << begin_element << endl;
+          //cout << "Begin element: " << begin_element << endl;
           MPI_Send(passwords[begin_element].c_str(), passwords[begin_element].length(), 
             MPI_CHAR, mpitask, mpitask, MPI_COMM_WORLD);
           ++begin_element;
@@ -270,14 +269,14 @@ void scatter(std::vector<string>& passwords, std::vector<string>& local_password
   // Other processes receive their share of the dictionary
   if (rank != root)
   {
-    cout << "Process " << rank << " made it to the receive loop " << endl;
+    //cout << "Process " << rank << " made it to the receive loop " << endl;
     int base = num_passes / numtasks;
     int extra = num_passes % numtasks;
     int num_passes_by_rank = rank < extra ? base + 1 : base;
-    cout << "Process " << rank << " num_passes_by_rank = " << num_passes_by_rank << endl;
+    //cout << "Process " << rank << " num_passes_by_rank = " << num_passes_by_rank << endl;
     for (int i = 0; i < num_passes_by_rank; i++)
     {
-      cout << "In recv proc " << rank << " recv loop " << i << endl;
+      //cout << "In recv proc " << rank << " recv loop " << i << endl;
       // Probe the message
       MPI_Probe(root, rank, MPI_COMM_WORLD, &status);
       int len = 0;
@@ -288,7 +287,7 @@ void scatter(std::vector<string>& passwords, std::vector<string>& local_password
         root, rank, MPI_COMM_WORLD, &status);
 
       string buf_string(buf, len);
-      cout << "In recv for proc " << rank << " string is " << buf_string << endl;
+      //cout << "In recv for proc " << rank << " string is " << buf_string << endl;
       local_passwords.push_back(buf_string);
     }
   }
