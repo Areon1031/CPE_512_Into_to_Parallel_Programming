@@ -1,7 +1,5 @@
-﻿  MPI_Password_Crack.cpp
-c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\mpi_password_crack.cpp(109): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\mpi_password_crack.cpp(55): warning C4101: 'status': unreferenced local variable
-c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\mpi_password_crack.cpp(52): warning C4101: 'num': unreferenced local variable
-c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\mpi_password_crack.cpp(163): warning C4101: 'request': unreferenced local variable
-c:\users\krray\onedrive\documents\github\cpe_512_into_to_parallel_programming\project\hash_cracking\mpi_password_crack.cpp(277): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  HASH_CRACKING.vcxproj -> C:\Users\krray\OneDrive\Documents\GitHub\CPE_512_Into_to_Parallel_Programming\Project\x64\Debug\HASH_CRACKING.exe
+﻿  Serial_Password_Crack.cpp
+e:\uah\cpe_512_into_to_parallel_programming\project\hash_cracking\serial_password_crack.cpp(84): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+e:\uah\cpe_512_into_to_parallel_programming\project\hash_cracking\serial_password_crack.cpp(39): warning C4101: 'finish': unreferenced local variable
+e:\uah\cpe_512_into_to_parallel_programming\project\hash_cracking\serial_password_crack.cpp(39): warning C4101: 'start': unreferenced local variable
+  HASH_CRACKING.vcxproj -> E:\UAH\CPE_512_Into_to_Parallel_Programming\Project\x64\Debug\HASH_CRACKING.exe

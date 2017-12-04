@@ -18,10 +18,10 @@
 *   Refer to the license file attached.
 *
 * Compile
-*   g++ md5.cpp sha1.cpp sha256.cpp MPI_Password_Crack.cpp -o MPI_Password_Crack -fopenmp
+*   g++ md5.cpp sha1.cpp sha256.cpp OpenMP_Password_Crack.cpp -o OpenMP_Password_Crack -fopenmp
 *
 * Run:
-*   ./MPI_Password_Crack DICTIONARY ACTUAL_PASSWORD NUM_THREADS
+*   ./OpenMP_Password_Crack HASH_MODE DICTIONARY ACTUAL_PASSWORD NUM_THREADS
 *
 * Author: Kyle Ray
 * CPE 512 Intro to Parallel Programming
@@ -41,7 +41,7 @@ using namespace std;
 
 // OpenMP
 #ifdef _OPENMP
-  #include <omp.h>
+#include <omp.h>
 #endif
 
 // Prototypes
@@ -51,26 +51,27 @@ int main(int argc, char* argv[])
 {
   // Variables
   double start, finish;
-  const int hash_mode = 2; // 0 - MD5, 1 - SHA-1, 2 - SHA-256
 
-  if (argc < 2)
+  if (argc < 5)
   {
-    std::cout << "Usage: programName dictionaryFile passwordToFind numberOfThreads" << endl;
+    std::cout << "Usage: programName hashMode dictionaryFile passwordToFind numberOfThreads" << endl;
     exit(EXIT_FAILURE);
   }
+
+  int hash_mode = atoi(argv[1]); // 0 - MD5, 1 - SHA-1, 2 - SHA-256
 
   // Actual Password
   std::string actual_pass;
   switch (hash_mode)
   {
   case 0:
-    actual_pass = md5(argv[2]);
+    actual_pass = md5(argv[3]);
     break;
   case 1:
-    actual_pass = sha1(argv[2]);
+    actual_pass = sha1(argv[3]);
     break;
   case 2:
-    actual_pass = sha256(argv[2]);
+    actual_pass = sha256(argv[3]);
     break;
   }
 
@@ -87,7 +88,7 @@ int main(int argc, char* argv[])
   // Should then send the size that each process should allocate to hold their part
   // Scatter the dictionary to other tasks.
   std::cout << "Reading Dictionary" << endl;
-  if (!readDictionary(argv[1], passwords))
+  if (!readDictionary(argv[2], passwords))
   {
     // Something went wrong with the file
     exit(EXIT_FAILURE);
@@ -95,19 +96,24 @@ int main(int argc, char* argv[])
 
   // Set the total number of passwords to make each process aware
   total_num_passes = passwords.size();
-  
+
+  // Display the number of Passwords
+  cout << "Finished reading Dictionary with " << total_num_passes << " passwords!" << endl;
+
+  cout << "Starting the Timer " << endl;
+  cout << "Processing...\n\n\n\n";
   // Start the timer
   start = omp_get_wtime();
-  
+
 
   // Check each local pass hash and if we find the password then quit
   int num_threads;
-  if (argc < 3)
+  if (argc < 5)
     num_threads = 1;
   else
-    num_threads = atoi(argv[3]);
+    num_threads = atoi(argv[4]);
 
-  #pragma omp parallel for num_threads(num_threads) schedule(static, 1) 
+#pragma omp parallel for num_threads(num_threads) schedule(static, 1) 
   for (int i = 0; i < passwords.size(); i++)
   {
     std::string check_pass;
@@ -128,20 +134,23 @@ int main(int argc, char* argv[])
     if (actual_pass == check_pass)
     {
       pass_found = true;
+      finish = omp_get_wtime();
       std::cout << "Pass found by process " << omp_get_thread_num() << endl
         << "Password is " << passwords[i] << endl
         << "Hash is " << check_pass << endl;
       break;
     }
+
+    // Let the other processes know that we are done.
+    if (pass_found)
+      break;
   }
 
   // TODO: Make sure that I can get the timing right, should stop the clock when the process reports
   // that it has found the password.
   // This means that I need to take the wall time of the process that finds the password.
-  finish = omp_get_wtime();
   std::cout << "Time to find the password is " << (finish - start) << " seconds" << endl;
 
-  cin.ignore();
   return 0;
 }
 
