@@ -32,6 +32,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <cstdlib> // atoi
 using namespace std;
 
 // Hashing Function Include
@@ -50,6 +51,7 @@ int main(int argc, char* argv[])
 {
   // Variables
   int numtasks, rank, num;
+  double tot_finish;
   double start, finish;
   int hash_mode; // 0 - MD5, 1 - SHA-1, 2 - SHA-256
   MPI_Status status;
@@ -63,7 +65,7 @@ int main(int argc, char* argv[])
   {
     if (argc < 3)
     {
-      cout << "Usage: mpirun -np numtasks programName hashmode dictionaryFile passwordToFind" << endl;
+      std::cout << "Usage: mpirun -np numtasks programName hashmode dictionaryFile passwordToFind" << endl;
       MPI_Abort(MPI_COMM_WORLD, MPI_ERR_INFO);
     }
   }
@@ -101,7 +103,7 @@ int main(int argc, char* argv[])
 
   if (rank == 0)
   {
-    cout << "Reading Dictionary" << endl;
+    std::cout << "Reading Dictionary" << endl;
     if (!readDictionary(argv[2], passwords))
     {
       // Something went wrong with the file
@@ -112,7 +114,7 @@ int main(int argc, char* argv[])
     total_num_passes = passwords.size();
 
     // Display Size of Dictionary
-    cout << "Finished reading Dictionary with " << total_num_passes << " passwords!" << endl;
+    std::cout << "Finished reading Dictionary with " << total_num_passes << " passwords!" << endl;
   }
 
   MPI_Bcast(&total_num_passes, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -126,16 +128,24 @@ int main(int argc, char* argv[])
 
   if (rank == 0)
   {
-    cout << "Starting the timer. " << endl;
-    cout << "Processing...\n\n\n\n";
+    std::cout << "Starting the timer. " << endl;
+    std::cout << "Scattering...\n";
     start = MPI_Wtime();   
   }
 
   // Scatter the passwords to the processes
   scatter(passwords, local_passwords, total_num_passes , 0, rank, numtasks);
 
+  if (rank == 0)
+  {
+    std::cout << "Processing...\n\n\n\n";
+  }
+
   // Flag for a process to report when done, allows other processes to know when to stop
   bool someone_done;
+
+  int pass_count = 0;
+  double loc_finish = 0;
 
   // Check each local pass hash and if we find the password then quit and let all the other processes know
   // Start the main loop
@@ -163,7 +173,8 @@ int main(int argc, char* argv[])
     if (actual_pass == check_pass)
     {
       pass_found = true;
-      cout << "Pass found by process " << rank << endl
+      loc_finish = MPI_Wtime();
+      std::cout << "Pass found by process " << rank << endl
         << "Password is " << local_passwords[i] << endl
         << "Hash is " << check_pass << endl;
     }
@@ -171,29 +182,35 @@ int main(int argc, char* argv[])
     // Let other processes know if the password is found or not
     // TODO: Could probably use non blocking send and receives to do this somehow, just to make it more efficient.
     // Although, all of the loops should be somewhere around the same time complexity, so it might not matter too much.
-    MPI_Status status;
-    for (int mpitask = 0; mpitask < numtasks; mpitask++)
-    {
-      // If not current process, send flag to other processes.
-      if (mpitask != rank)
-      {
-        MPI_Send(&pass_found, 1, MPI_C_BOOL, mpitask, rank, MPI_COMM_WORLD);
+    //MPI_Status status;
+    //for (int mpitask = 0; mpitask < numtasks; mpitask++)
+    //{
+    //  // If not current process, send flag to other processes.
+    //  if (mpitask != rank)
+    //  {
+    //    MPI_Send(&pass_found, 1, MPI_C_BOOL, mpitask, rank, MPI_COMM_WORLD);
 
-        // Receive flag from other processes
-        MPI_Recv(&someone_done, 1, MPI_C_BOOL, mpitask, mpitask, MPI_COMM_WORLD, &status);
+    //    // Receive flag from other processes
+    //    MPI_Recv(&someone_done, 1, MPI_C_BOOL, mpitask, mpitask, MPI_COMM_WORLD, &status);
 
-        // If password is found by a process, then set exit condition
-        if (someone_done)
-          pass_found = true;
-      }
-    }
+    //    // If password is found by a process, then set exit condition
+    //    if (someone_done)
+    //      pass_found = true;
+    //  }
+    //}
+
+    //pass_count++;
 
     // If the password has been found, no more processing necessary
     if (pass_found)
       break;
   }
 
-  cout << "CLEAN UP: Process " << rank << " is finished " << endl;
+  if (!pass_found)
+    loc_finish = MPI_Wtime();
+
+  MPI_Reduce(&loc_finish, &finish, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  std::cout << "CLEAN UP: Process " << rank << " is finished processing " << endl;//<< pass_count << " number of passwords ending on " << local_passwords[pass_count-1] << endl;
 
   MPI_Barrier(MPI_COMM_WORLD);
   // TODO: Make sure that I can get the timing right, should stop the clock when the process reports
@@ -201,8 +218,9 @@ int main(int argc, char* argv[])
   // This means that I need to take the wall time of the process that finds the password.
   if (rank == 0)
   {
-    finish = MPI_Wtime();
-    cout << "Time to find the password is " << (finish - start) << " seconds" << endl;
+    tot_finish = MPI_Wtime();
+    std::cout << "Time to find the password is " << (finish - start) << " seconds" << endl;
+    std::cout << "Total execution time: " << (tot_finish - start) << " seconds" << endl;
   }
 
 
@@ -270,7 +288,8 @@ void scatter(std::vector<string>& passwords, std::vector<string>& local_password
       {
         for (int i = 0; i < num_passes_by_rank; i++)
         {
-          MPI_Send(passwords[begin_element].c_str(), passwords[begin_element].length(), 
+          char* pass = const_cast<char*>(passwords[begin_element].c_str());
+          MPI_Send(pass, passwords[begin_element].length(), 
             MPI_CHAR, mpitask, mpitask, MPI_COMM_WORLD);
           ++begin_element;
         }

@@ -23,6 +23,7 @@
 #include <vector>
 #include <fstream>
 #include <ctime>
+#include <cstdlib> // atoi
 using namespace std;
 
 // Hashing Function Include
@@ -77,6 +78,7 @@ int main(int argc, char* argv[])
   if (!readDictionary(argv[2], passwords))
   {
     // Something went wrong with the file
+    cout << "Error reading the dictionary file" << endl;
     exit(EXIT_FAILURE);
   }
 

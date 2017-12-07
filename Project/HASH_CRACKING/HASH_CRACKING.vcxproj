@@ -22,7 +22,7 @@
     <ClCompile Include="..\zedwood\MD5\md5.cpp" />
     <ClCompile Include="..\zedwood\SHA1\sha1.cpp" />
     <ClCompile Include="..\zedwood\SHA256\sha256.cpp" />
-    <ClCompile Include="Serial_Password_Crack.cpp" />
+    <ClCompile Include="MPI_Password_Crack.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

@@ -138,12 +138,11 @@ int main(int argc, char* argv[])
       std::cout << "Pass found by process " << omp_get_thread_num() << endl
         << "Password is " << passwords[i] << endl
         << "Hash is " << check_pass << endl;
-      break;
     }
 
-    // Let the other processes know that we are done.
+    // Found the password, break out of the for loop (break statements not welcome)
     if (pass_found)
-      break;
+      i = passwords.size();
   }
 
   // TODO: Make sure that I can get the timing right, should stop the clock when the process reports
